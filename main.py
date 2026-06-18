@@ -1,17 +1,18 @@
 """
 ==========================================================
 API DỰ BÁO AMONI (TAN) TRONG AO NUÔI TÔM
-FastAPI + Random Forest
+FastAPI + Random Forest + Supabase
 ==========================================================
 """
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from typing import Optional, List
 import numpy as np
 import joblib
 import os
-
+import httpx
 
 
 # ----------------------------------------------------------
@@ -19,9 +20,9 @@ import os
 # ----------------------------------------------------------
 
 app = FastAPI(
-    title="TAN Prediction API",
-    description="API dự báo nồng độ Amoni (TAN) trong ao nuôi tôm",
-    version="1.0.0"
+    title="AquaPredict API",
+    description="API dự báo TAN và quản lý ao nuôi tôm",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -33,8 +34,56 @@ app.add_middleware(
 
 
 # ----------------------------------------------------------
+# SUPABASE CONFIG
+# ----------------------------------------------------------
+
+SUPABASE_URL = os.getenv(
+    "SUPABASE_URL",
+    "https://zijmbwlyaoctibqooacm.supabase.co"
+)
+SUPABASE_KEY = os.getenv(
+    "SUPABASE_KEY",
+    "REDACTED_ROTATED_KEY"
+)
+
+SUPABASE_HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+}
+
+
+async def supabase_get(table: str, params: dict = {}):
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, headers=SUPABASE_HEADERS, params=params)
+        if r.status_code not in (200, 206):
+            raise HTTPException(status_code=r.status_code, detail=r.text)
+        return r.json()
+
+
+async def supabase_post(table: str, data: dict):
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    async with httpx.AsyncClient() as client:
+        r = await client.post(url, headers=SUPABASE_HEADERS, json=data)
+        if r.status_code not in (200, 201):
+            raise HTTPException(status_code=r.status_code, detail=r.text)
+        return r.json()
+
+
+async def supabase_delete(table: str, match: dict):
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    params = {k: f"eq.{v}" for k, v in match.items()}
+    async with httpx.AsyncClient() as client:
+        r = await client.delete(url, headers=SUPABASE_HEADERS, params=params)
+        if r.status_code not in (200, 204):
+            raise HTTPException(status_code=r.status_code, detail=r.text)
+        return {"deleted": True}
+
+
+# ----------------------------------------------------------
 # LOAD MODEL & SCALER
-# (Đặt file .pkl cùng thư mục với main.py)
 # ----------------------------------------------------------
 
 MODEL_PATH  = os.getenv("MODEL_PATH",  "rf_model.pkl")
@@ -47,85 +96,64 @@ try:
     print(f"✅ Scaler loaded: {SCALER_PATH}")
 except FileNotFoundError as e:
     print(f"⚠️  WARNING: {e}")
-    print("   API vẫn khởi động nhưng /predict sẽ báo lỗi cho đến khi load được model.")
     model    = None
     scaler_X = None
 
 
 # ----------------------------------------------------------
-# NGƯỠNG CẢNH BÁO AMONI (mg/L)
-# Tôm thẻ chân trắng / tôm sú — điều chỉnh theo thực tế
+# NGƯỠNG CẢNH BÁO
 # ----------------------------------------------------------
 
-THRESHOLD_SAFE    = 0.5    # < 0.5 mg/L  → An toàn
-THRESHOLD_WARNING = 1.0    # 0.5–1.0     → Cảnh báo
-                           # > 1.0       → Nguy hiểm
+THRESHOLD_SAFE    = 0.5
+THRESHOLD_WARNING = 1.0
 
 
 def classify_tan(value_mg_l: float) -> dict:
-    """Phân loại mức độ an toàn dựa trên nồng độ TAN."""
     if value_mg_l < THRESHOLD_SAFE:
         return {
-            "level": "AN TOÀN",
-            "level_en": "SAFE",
-            "color": "green",
+            "level": "AN TOÀN", "level_en": "SAFE", "color": "green",
             "message": f"TAN = {value_mg_l:.3f} mg/L — Nằm trong ngưỡng an toàn (< {THRESHOLD_SAFE} mg/L).",
             "action": "Không cần can thiệp. Tiếp tục theo dõi định kỳ."
         }
     elif value_mg_l < THRESHOLD_WARNING:
         return {
-            "level": "CẢNH BÁO",
-            "level_en": "WARNING",
-            "color": "orange",
-            "message": f"TAN = {value_mg_l:.3f} mg/L — Đang tăng, cần theo dõi chặt ({THRESHOLD_SAFE}–{THRESHOLD_WARNING} mg/L).",
+            "level": "CẢNH BÁO", "level_en": "WARNING", "color": "orange",
+            "message": f"TAN = {value_mg_l:.3f} mg/L — Đang tăng, cần theo dõi chặt.",
             "action": "Tăng sục khí, giảm lượng thức ăn, kiểm tra pH và nhiệt độ."
         }
     else:
         return {
-            "level": "NGUY HIỂM",
-            "level_en": "DANGER",
-            "color": "red",
+            "level": "NGUY HIỂM", "level_en": "DANGER", "color": "red",
             "message": f"TAN = {value_mg_l:.3f} mg/L — Vượt ngưỡng nguy hiểm (> {THRESHOLD_WARNING} mg/L).",
             "action": "Can thiệp ngay: thay nước, tăng sục khí tối đa, ngưng cho ăn, xét dùng vi sinh."
         }
 
 
 # ----------------------------------------------------------
-# SCHEMA ĐẦU VÀO
-# Thứ tự features phải KHỚP với selected_features lúc train
-# Điều chỉnh danh sách bên dưới theo đúng output của pipeline
+# SCHEMAS — PREDICT
 # ----------------------------------------------------------
 
 class PredictRequest(BaseModel):
-    # --- Lag features ---
-    Amoni_lag1: float = Field(..., description="Nồng độ Amoni đo lần trước (mg/L)", example=0.45)
-    Amoni_lag2: float = Field(..., description="Nồng độ Amoni đo 2 lần trước (mg/L)", example=0.40)
+    Amoni_lag1: float = Field(..., example=0.45)
+    Amoni_lag2: float = Field(..., example=0.40)
+    Do_kiem:    float = Field(..., example=120.0)
+    Tuoi_tom:   float = Field(..., example=45.0)
+    Do_man:     float = Field(..., example=15.0)
+    Do_duc:     float = Field(..., example=25.0)
+    Nhiet_do:   float = Field(..., example=29.5)
+    Phosphate:  float = Field(..., example=0.1)
+    pH:         float = Field(..., example=7.8)
+    DO:         float = Field(..., example=6.2)
+    Do_trong:   float = Field(..., example=35.0)
+    Silica:     float = Field(..., example=1.5)
+    Do_mau:     float = Field(..., example=10.0)
+    Nitrit:     float = Field(..., example=0.02)
+    Do_cung:    float = Field(..., example=800.0)
+    thucan_lysine:       float = Field(..., example=1.8)
+    thucan_protein_tho:  float = Field(..., example=35.0)
+    thucan_beo:          float = Field(..., example=7.0)
+    thucan_xo_tho:       float = Field(..., example=3.5)
 
-    # --- Chỉ số nước ---
-    Do_kiem:    float = Field(..., description="Độ kiềm (mg/L CaCO3)", example=120.0)
-    Tuoi_tom:   float = Field(..., description="Tuổi tôm (ngày)", example=45.0)
-    Do_man:     float = Field(..., description="Độ mặn (‰)", example=15.0)
-    Do_duc:     float = Field(..., description="Độ đục (NTU)", example=25.0)
-    Nhiet_do:   float = Field(..., description="Nhiệt độ (°C)", example=29.5)
-    Phosphate:  float = Field(..., description="Phosphate PO4³⁻ (mg/L)", example=0.1)
-    pH:         float = Field(..., description="pH", example=7.8)
-    DO:         float = Field(..., description="Oxy hòa tan (mg/L)", example=6.2)
-    Do_trong:   float = Field(..., description="Độ trong (cm)", example=35.0)
-    Silica:     float = Field(..., description="Silica (mg/L)", example=1.5)
-    Do_mau:     float = Field(..., description="Độ màu (Pt-Co)", example=10.0)
-    Nitrit:     float = Field(..., description="Nitrit NO2- (mg/L)", example=0.02)
-    Do_cung:    float = Field(..., description="Độ cứng (mg/L CaCO3)", example=800.0)
-
-    # --- Thức ăn ---
-    thucan_lysine:       float = Field(..., description="Lysine (%)", example=1.8)
-    thucan_protein_tho:  float = Field(..., description="Protein thô (%)", example=35.0)
-    thucan_beo:          float = Field(..., description="Tỉ lệ béo trong thức ăn (%)", example=7.0)
-    thucan_xo_tho:       float = Field(..., description="Xơ thô (%)", example=3.5)
-
-
-# ----------------------------------------------------------
-# SCHEMA ĐẦU RA
-# ----------------------------------------------------------
 
 class PredictResponse(BaseModel):
     tan_predicted_mg_l:  float
@@ -138,73 +166,68 @@ class PredictResponse(BaseModel):
     input_summary:       dict
 
 
-# ----------------------------------------------------------
-# HELPER: build feature vector theo đúng thứ tự
-# ⚠️  Quan trọng: thứ tự này phải KHỚP với selected_features
-#     lúc train. Nếu pipeline loại bớt feature nào thì bỏ ở đây.
-# ----------------------------------------------------------
-
-# Thứ tự CHÍNH XÁC theo selected_features của pipeline
 FEATURE_ORDER = [
-    "Amoni_lag1",
-    "Do_kiem",
-    "Amoni_lag2",
-    "Tuoi_tom",
-    "Do_man",
-    "Do_duc",
-    "Nhiet_do",
-    "Phosphate",
-    "pH",
-    "thucan_xo_tho",
-    "DO",
-    "Do_trong",
-    "Silica",
-    "Do_mau",
-    "Nitrit",
-    "Do_cung",
-    "thucan_lysine",
-    "thucan_protein_tho",
-    "thucan_beo",
+    "Amoni_lag1","Do_kiem","Amoni_lag2","Tuoi_tom","Do_man","Do_duc",
+    "Nhiet_do","Phosphate","pH","thucan_xo_tho","DO","Do_trong","Silica",
+    "Do_mau","Nitrit","Do_cung","thucan_lysine","thucan_protein_tho","thucan_beo",
 ]
 
 
 def build_feature_vector(req: PredictRequest) -> np.ndarray:
-    data = {
-        "Amoni_lag1":           req.Amoni_lag1,
-        "Amoni_lag2":           req.Amoni_lag2,
-        "Do_kiem":              req.Do_kiem,
-        "Tuoi_tom":             req.Tuoi_tom,
-        "Do_man":               req.Do_man,
-        "Do_duc":               req.Do_duc,
-        "Nhiet_do":             req.Nhiet_do,
-        "Phosphate":            req.Phosphate,
-        "pH":                   req.pH,
-        "thucan_xo_tho":        req.thucan_xo_tho,
-        "DO":                   req.DO,
-        "Do_trong":             req.Do_trong,
-        "Silica":               req.Silica,
-        "Do_mau":               req.Do_mau,
-        "Nitrit":               req.Nitrit,
-        "Do_cung":              req.Do_cung,
-        "thucan_lysine":        req.thucan_lysine,
-        "thucan_protein_tho":   req.thucan_protein_tho,
-        "thucan_beo":           req.thucan_beo,
-    }
+    data = req.model_dump()
     vector = np.array([data[f] for f in FEATURE_ORDER], dtype=float)
     return vector.reshape(1, -1)
 
 
 # ----------------------------------------------------------
-# ENDPOINTS
+# SCHEMAS — POND
+# ----------------------------------------------------------
+
+class PondCreate(BaseModel):
+    name: str = Field(..., example="Ao 05")
+    area: Optional[str] = Field(None, example="Khu C")
+    size_m2: Optional[float] = None
+    pond_type: Optional[str] = None
+    species: Optional[str] = None
+    stocking_date: Optional[str] = None
+    stocking_count: Optional[int] = None
+    density: Optional[float] = None
+    note: Optional[str] = None
+
+
+# ----------------------------------------------------------
+# SCHEMAS — MEASUREMENT
+# ----------------------------------------------------------
+
+class MeasurementCreate(BaseModel):
+    pond_id: str
+    measured_at: Optional[str] = None
+    tan: Optional[float] = None
+    ph: Optional[float] = None
+    do_val: Optional[float] = None
+    temperature: Optional[float] = None
+    salinity: Optional[float] = None
+    alkalinity: Optional[float] = None
+    hardness: Optional[float] = None
+    tds: Optional[float] = None
+    turbidity: Optional[float] = None
+    transparency: Optional[float] = None
+    color: Optional[float] = None
+    nitrite: Optional[float] = None
+    nitrate: Optional[float] = None
+    phosphate: Optional[float] = None
+    silica: Optional[float] = None
+    shrimp_age: Optional[int] = None
+    note: Optional[str] = None
+
+
+# ----------------------------------------------------------
+# ENDPOINTS — HEALTH
 # ----------------------------------------------------------
 
 @app.get("/", tags=["Health"])
 def root():
-    return {
-        "status": "running",
-        "api": "TAN Prediction API v1.0",
-        "docs": "/docs"
-    }
+    return {"status": "running", "api": "AquaPredict API v2.0", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Health"])
@@ -212,58 +235,125 @@ def health():
     return {
         "model_loaded":  model    is not None,
         "scaler_loaded": scaler_X is not None,
-        "model_path":    MODEL_PATH,
-        "scaler_path":   SCALER_PATH,
+        "supabase_url":  SUPABASE_URL,
     }
 
+
+# ----------------------------------------------------------
+# ENDPOINTS — PREDICT
+# ----------------------------------------------------------
 
 @app.post("/predict", response_model=PredictResponse, tags=["Prediction"])
 def predict(req: PredictRequest):
     if model is None or scaler_X is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Model chưa được load. Kiểm tra đường dẫn rf_model.pkl và scaler_X.pkl."
-        )
-
+        raise HTTPException(status_code=503, detail="Model chưa được load.")
     try:
-        # 1. Build feature vector
-        X = build_feature_vector(req)
-
-        # 2. Scale
+        X        = build_feature_vector(req)
         X_scaled = scaler_X.transform(X)
-
-        # 3. Predict (log scale)
-        y_log = float(model.predict(X_scaled)[0])
-
-        # 4. Inverse transform về mg/L
-        y_mg_l = float(np.expm1(y_log))
-        y_mg_l = max(0.0, y_mg_l)  # không âm
-
-        # 5. Cảnh báo
-        warn = classify_tan(y_mg_l)
-
+        y_log    = float(model.predict(X_scaled)[0])
+        y_mg_l   = max(0.0, float(np.expm1(y_log)))
+        warn     = classify_tan(y_mg_l)
         return PredictResponse(
-            tan_predicted_mg_l  = round(y_mg_l, 4),
-            tan_log_predicted   = round(y_log,  4),
-            warning_level       = warn["level"],
-            warning_level_en    = warn["level_en"],
-            warning_color       = warn["color"],
-            warning_message     = warn["message"],
-            recommended_action  = warn["action"],
-            input_summary       = req.model_dump(),
+            tan_predicted_mg_l = round(y_mg_l, 4),
+            tan_log_predicted  = round(y_log,  4),
+            warning_level      = warn["level"],
+            warning_level_en   = warn["level_en"],
+            warning_color      = warn["color"],
+            warning_message    = warn["message"],
+            recommended_action = warn["action"],
+            input_summary      = req.model_dump(),
         )
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ----------------------------------------------------------
+# ENDPOINTS — PONDS
+# ----------------------------------------------------------
+
+@app.get("/ponds", tags=["Ponds"])
+async def get_ponds():
+    """Lấy danh sách tất cả ao nuôi."""
+    return await supabase_get("ponds", {"order": "created_at.desc"})
+
+
+@app.post("/ponds", tags=["Ponds"])
+async def create_pond(pond: PondCreate):
+    """Tạo ao nuôi mới."""
+    data = {k: v for k, v in pond.model_dump().items() if v is not None}
+    result = await supabase_post("ponds", data)
+    return result[0] if isinstance(result, list) else result
+
+
+@app.delete("/ponds/{pond_id}", tags=["Ponds"])
+async def delete_pond(pond_id: str):
+    """Xoá ao nuôi."""
+    return await supabase_delete("ponds", {"id": pond_id})
+
+
+# ----------------------------------------------------------
+# ENDPOINTS — MEASUREMENTS
+# ----------------------------------------------------------
+
+@app.get("/measurements", tags=["Measurements"])
+async def get_measurements(pond_id: Optional[str] = None, limit: int = 100):
+    """Lấy lịch sử số liệu. Lọc theo pond_id nếu có."""
+    params = {"order": "measured_at.desc", "limit": str(limit)}
+    if pond_id:
+        params["pond_id"] = f"eq.{pond_id}"
+    return await supabase_get("measurements", params)
+
+
+@app.post("/measurements", tags=["Measurements"])
+async def create_measurement(m: MeasurementCreate):
+    """Nhập số liệu đo hàng ngày cho một ao."""
+    data = {k: v for k, v in m.model_dump().items() if v is not None}
+    result = await supabase_post("measurements", data)
+    return result[0] if isinstance(result, list) else result
+
+
+@app.delete("/measurements/{measurement_id}", tags=["Measurements"])
+async def delete_measurement(measurement_id: str):
+    """Xoá một bản ghi số liệu."""
+    return await supabase_delete("measurements", {"id": measurement_id})
+
+
+# ----------------------------------------------------------
+# ENDPOINTS — DASHBOARD
+# ----------------------------------------------------------
+
+@app.get("/dashboard/{pond_id}", tags=["Dashboard"])
+async def get_dashboard(pond_id: str):
+    """
+    Lấy dữ liệu dashboard cho một ao:
+    - 7 bản ghi mới nhất để vẽ biểu đồ
+    - Bản ghi mới nhất để hiển thị stat card
+    """
+    params = {
+        "pond_id": f"eq.{pond_id}",
+        "order": "measured_at.desc",
+        "limit": "7"
+    }
+    records = await supabase_get("measurements", params)
+
+    if not records:
+        return {"latest": None, "chart_data": [], "pond_id": pond_id}
+
+    latest   = records[0]
+    chart    = list(reversed(records))   # sắp xếp tăng dần để vẽ biểu đồ
+
+    return {
+        "pond_id":    pond_id,
+        "latest":     latest,
+        "chart_data": chart,
+    }
+
+
 @app.get("/thresholds", tags=["Config"])
 def get_thresholds():
-    """Xem ngưỡng cảnh báo hiện tại."""
     return {
         "safe_below_mg_l":    THRESHOLD_SAFE,
         "warning_below_mg_l": THRESHOLD_WARNING,
         "danger_above_mg_l":  THRESHOLD_WARNING,
-        "unit": "mg/L",
-        "note": "Áp dụng cho tôm thẻ chân trắng / tôm sú. Điều chỉnh trong main.py nếu cần."
+        "unit": "mg/L"
     }
