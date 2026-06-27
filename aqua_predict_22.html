@@ -1420,7 +1420,8 @@ function renderPondListTable() {
     const first = d && d.length > 0 ? d[0].fullDate : null;
     const dateStr = first ? new Date(first).toLocaleDateString('vi-VN') : '—';
     const pondId = POND_IDS[name];
-    return `<tr><td><strong>${name}</strong></td><td>—</td><td>${dateStr}</td><td><span class="pill p-safe"><i class="ti ti-circle-check" style="font-size:10px"></i>Hoạt động</span></td><td><button class="btn-xs" onclick="inviteMember('${pondId}', '${name.replace(/'/g, "\\'")}')"><i class="ti ti-user-plus"></i> Mời</button></td></tr>`;
+    const safeName = name.replace(/'/g, "\\'");
+    return `<tr><td><strong>${name}</strong></td><td>—</td><td>${dateStr}</td><td><span class="pill p-safe"><i class="ti ti-circle-check" style="font-size:10px"></i>Hoạt động</span></td><td style="display:flex;gap:6px"><button class="btn-xs" onclick="inviteMember('${pondId}', '${safeName}')"><i class="ti ti-user-plus"></i> Mời</button><button class="btn-xs" onclick="manageMembers('${pondId}', '${safeName}')"><i class="ti ti-users"></i> Quản lý</button></td></tr>`;
   }).join('');
 }
 
@@ -1434,6 +1435,30 @@ async function inviteMember(pondId, pondName) {
     alert(`✅ Đã mời ${email} cùng quản lý "${pondName}".`);
   } catch (e) {
     alert('Lỗi khi mời thành viên: ' + (e.message || e));
+  }
+}
+
+async function manageMembers(pondId, pondName) {
+  if (!sb) { alert('Không kết nối được hệ thống dữ liệu.'); return; }
+  try {
+    const { data, error } = await sb.rpc('list_pond_members', { p_pond_id: pondId });
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      alert(`Ao "${pondName}" chưa có thành viên nào được mời.`);
+      return;
+    }
+    const list = data.map((m, i) => `${i + 1}. ${m.email}`).join('\n');
+    const choice = prompt(`Thành viên của "${pondName}":\n${list}\n\nNhập số thứ tự để XOÁ thành viên đó (bỏ trống để đóng):`);
+    if (!choice) return;
+    const idx = parseInt(choice) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= data.length) { alert('Số thứ tự không hợp lệ.'); return; }
+    const target = data[idx];
+    if (!confirm(`Xoá quyền quản lý của ${target.email} khỏi ao "${pondName}"?`)) return;
+    const { error: delErr } = await sb.from('pond_members').delete().eq('pond_id', pondId).eq('user_id', target.user_id);
+    if (delErr) throw delErr;
+    alert(`✅ Đã xoá ${target.email} khỏi ao "${pondName}".`);
+  } catch (e) {
+    alert('Lỗi khi quản lý thành viên: ' + (e.message || e));
   }
 }
 
