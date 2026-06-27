@@ -64,22 +64,23 @@ body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe 
 .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
 .stat-card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:15px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:.2s}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.sc-blue::before{background:var(--primary)}.sc-green::before{background:var(--green)}.sc-orange::before{background:var(--orange)}.sc-red::before{background:var(--red)}
+.sc-blue::before{background:var(--primary)}.sc-green::before{background:var(--green)}.sc-orange::before{background:var(--orange)}.sc-red::before{background:var(--red)}.sc-muted::before{background:var(--border)}
 .stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .stat-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px}
 .sc-blue .stat-ico{background:var(--primary-light);color:var(--primary-dark)}
 .sc-green .stat-ico{background:var(--green-bg);color:var(--green)}
 .sc-orange .stat-ico{background:var(--orange-bg);color:var(--orange)}
 .sc-red .stat-ico{background:var(--red-bg);color:var(--red)}
+.sc-muted .stat-ico{background:var(--gray);color:var(--text2)}
 .stat-trend{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;display:flex;align-items:center;gap:2px}
 .tr-up{background:#FFEBEE;color:var(--red)}.tr-dn{background:#E8F5E9;color:var(--green)}.tr-ok{background:#FFF3E0;color:var(--primary-dark)}
 .stat-lbl{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:3px}
 .stat-num{font-size:24px;font-weight:900;line-height:1}
-.sc-blue .stat-num{color:var(--primary-dark)}.sc-green .stat-num{color:var(--green)}.sc-orange .stat-num{color:var(--orange)}.sc-red .stat-num{color:var(--red)}
+.sc-blue .stat-num{color:var(--primary-dark)}.sc-green .stat-num{color:var(--green)}.sc-orange .stat-num{color:var(--orange)}.sc-red .stat-num{color:var(--red)}.sc-muted .stat-num{color:var(--text2)}
 .stat-unit{font-size:10px;color:var(--text2);margin-top:2px;font-weight:500}
 .stat-prog{height:4px;background:#EEF0F4;border-radius:2px;margin-top:10px;overflow:hidden}
 .stat-prog-fill{height:100%;border-radius:2px;transition:width .4s}
-.sc-blue .stat-prog-fill{background:var(--primary)}.sc-green .stat-prog-fill{background:var(--green)}.sc-orange .stat-prog-fill{background:var(--orange)}.sc-red .stat-prog-fill{background:var(--red)}
+.sc-blue .stat-prog-fill{background:var(--primary)}.sc-green .stat-prog-fill{background:var(--green)}.sc-orange .stat-prog-fill{background:var(--orange)}.sc-red .stat-prog-fill{background:var(--red)}.sc-muted .stat-prog-fill{background:var(--border)}
 .card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden;margin-bottom:16px}
 .card-hd{padding:15px 18px 0;display:flex;align-items:center;justify-content:space-between}
 .card-ttl{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
@@ -342,32 +343,32 @@ body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe 
   <div class="stat-grid">
     <div class="stat-card sc-red">
       <div class="stat-top"><div class="stat-ico" style="font-size:20px">🧪</div><div class="stat-trend tr-up" id="trend-tan"><i class="ti ti-trending-up" style="font-size:9px"></i>+0.0</div></div>
-      <div class="stat-lbl">Amoni (TAN)</div><div class="stat-num" id="stat-tan">—</div><div class="stat-unit">mg/L</div>
+      <div class="stat-lbl">Amoni (TAN)</div><div class="stat-num" id="stat-tan">—</div><div class="stat-unit" id="unit-tan">mg/L</div>
       <div class="stat-prog"><div class="stat-prog-fill" id="prog-tan" style="width:0%"></div></div>
     </div>
     <div class="stat-card sc-green">
       <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#128167;</div><div class="stat-trend tr-ok" id="trend-ph"><i class="ti ti-minus" style="font-size:9px"></i>ổn</div></div>
-      <div class="stat-lbl">pH</div><div class="stat-num" id="stat-ph">—</div><div class="stat-unit">— · An toàn</div>
+      <div class="stat-lbl">pH</div><div class="stat-num" id="stat-ph">—</div><div class="stat-unit" id="unit-ph">— · An toàn</div>
       <div class="stat-prog"><div class="stat-prog-fill" id="prog-ph" style="width:0%"></div></div>
     </div>
     <div class="stat-card sc-blue">
       <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#127788;&#65039;</div><div class="stat-trend tr-dn" id="trend-do"><i class="ti ti-trending-down" style="font-size:9px"></i>-0.0</div></div>
-      <div class="stat-lbl">DO</div><div class="stat-num" id="stat-do">—</div><div class="stat-unit">mg/L · Ổn</div>
+      <div class="stat-lbl">DO</div><div class="stat-num" id="stat-do">—</div><div class="stat-unit" id="unit-do">mg/L · Ổn</div>
       <div class="stat-prog"><div class="stat-prog-fill" id="prog-do" style="width:0%"></div></div>
     </div>
     <div class="stat-card sc-green">
       <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#129514;</div><div class="stat-trend tr-ok" id="trend-kiem"><i class="ti ti-minus" style="font-size:9px"></i>ổn</div></div>
-      <div class="stat-lbl">Độ kiềm</div><div class="stat-num" id="stat-kiem">—</div><div class="stat-unit">mg/L CaCO&#8323; · Tốt</div>
+      <div class="stat-lbl">Độ kiềm</div><div class="stat-num" id="stat-kiem">—</div><div class="stat-unit" id="unit-kiem">mg/L CaCO&#8323; · Tốt</div>
       <div class="stat-prog"><div class="stat-prog-fill" id="prog-kiem" style="width:0%"></div></div>
     </div>
     <div class="stat-card sc-orange">
       <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#127777;&#65039;</div><div class="stat-trend tr-up" id="trend-temp"><i class="ti ti-trending-up" style="font-size:9px"></i>+0.0</div></div>
-      <div class="stat-lbl">Nhiệt độ</div><div class="stat-num" id="stat-temp">—</div><div class="stat-unit">&#176;C · Tăng</div>
+      <div class="stat-lbl">Nhiệt độ</div><div class="stat-num" id="stat-temp">—</div><div class="stat-unit" id="unit-temp">&#176;C · Tăng</div>
       <div class="stat-prog"><div class="stat-prog-fill" id="prog-temp" style="width:0%"></div></div>
     </div>
     <div class="stat-card sc-blue">
       <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#127754;</div><div class="stat-trend tr-ok" id="trend-sal"><i class="ti ti-minus" style="font-size:9px"></i>ổn</div></div>
-      <div class="stat-lbl">Độ mặn</div><div class="stat-num" id="stat-sal">—</div><div class="stat-unit">&#8240; · Ổn</div>
+      <div class="stat-lbl">Độ mặn</div><div class="stat-num" id="stat-sal">—</div><div class="stat-unit" id="unit-sal">&#8240; · Ổn</div>
       <div class="stat-prog"><div class="stat-prog-fill" id="prog-sal" style="width:0%"></div></div>
     </div>
   </div>
@@ -375,15 +376,15 @@ body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe 
   <!-- 3 biểu đồ tách riêng -->
   <div class="chart-3col">
     <div class="card" style="margin-bottom:0">
-      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng TAN & Oxy hòa tan (DO) — 20 ngày qua</div><button class="btn-xs" onclick="goPage('predict')">Dự báo ngay</button></div>
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng TAN & Oxy hòa tan (DO) — 7 ngày qua</div><button class="btn-xs" onclick="goPage('predict')">Dự báo ngay</button></div>
       <div class="card-bd"><div class="chart-box" style="height:200px"><canvas id="chart-tan-do"></canvas></div></div>
     </div>
     <div class="card" style="margin-bottom:0">
-      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng pH & Nhiệt độ — 20 ngày qua</div></div>
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng pH & Nhiệt độ — 7 ngày qua</div></div>
       <div class="card-bd"><div class="chart-box" style="height:190px"><canvas id="chart-ph-temp"></canvas></div></div>
     </div>
     <div class="card" style="margin-bottom:0">
-      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng Độ kiềm & Độ mặn — 20 ngày qua</div></div>
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng Độ kiềm & Độ mặn — 7 ngày qua</div></div>
       <div class="card-bd"><div class="chart-box" style="height:190px"><canvas id="chart-kiem"></canvas></div></div>
     </div>
   </div>
@@ -674,7 +675,7 @@ const API_URL = 'https://aquapredict-fuam.onrender.com/predict';
 
 // ═══ SUPABASE AUTH ═══
 const SUPABASE_URL = 'https://zijmbwlyaoctibqooacm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inppam1id2x5YW9jdGlicW9vYWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Nzc5OTAsImV4cCI6MjA5NzM1Mzk5MH0.8sv5qsEcD5CYlO8_dHUSdn45dAmPFMtcRXunnKBeV0k';
+const SUPABASE_ANON_KEY = 'sb_publishable_7vVkxxzI66Zbtu7LaTqEiQ_OyrILey7';
 let sb = null;
 
 function initSupabase() {
@@ -821,8 +822,9 @@ async function doLogout() {
 }
 
 
-// ═══ DỮ LIỆU 4 AO — 20 NGÀY (lưu trong bộ nhớ, mất khi tải lại trang) ═══
-const PONDS_DATA = {"Ao 01 — Khu A": [{"date": "31/05", "fullDate": "2026-05-31", "age": 30, "tan": 0.333, "ph": 7.66, "do": 6.17, "temp": 28.8, "sal": 15.1, "alk": 122, "nitrit": 0.046, "po4": 0.063}, {"date": "01/06", "fullDate": "2026-06-01", "age": 31, "tan": 0.345, "ph": 7.66, "do": 6.13, "temp": 29.1, "sal": 14.7, "alk": 117, "nitrit": 0.036, "po4": 0.132}, {"date": "02/06", "fullDate": "2026-06-02", "age": 32, "tan": 0.359, "ph": 7.83, "do": 6.49, "temp": 28.7, "sal": 15.2, "alk": 122, "nitrit": 0.024, "po4": 0.073}, {"date": "03/06", "fullDate": "2026-06-03", "age": 33, "tan": 0.494, "ph": 7.75, "do": 6.06, "temp": 28.8, "sal": 15.2, "alk": 121, "nitrit": 0.042, "po4": 0.159}, {"date": "04/06", "fullDate": "2026-06-04", "age": 34, "tan": 0.48, "ph": 7.94, "do": 6.23, "temp": 29.2, "sal": 15.2, "alk": 121, "nitrit": 0.044, "po4": 0.137}, {"date": "05/06", "fullDate": "2026-06-05", "age": 35, "tan": 0.542, "ph": 7.66, "do": 6.14, "temp": 29.0, "sal": 14.7, "alk": 117, "nitrit": 0.014, "po4": 0.092}, {"date": "06/06", "fullDate": "2026-06-06", "age": 36, "tan": 0.573, "ph": 7.76, "do": 6.22, "temp": 28.9, "sal": 14.9, "alk": 124, "nitrit": 0.036, "po4": 0.141}, {"date": "07/06", "fullDate": "2026-06-07", "age": 37, "tan": 0.552, "ph": 7.87, "do": 6.1, "temp": 29.1, "sal": 15.3, "alk": 121, "nitrit": 0.032, "po4": 0.153}, {"date": "08/06", "fullDate": "2026-06-08", "age": 38, "tan": 0.68, "ph": 7.88, "do": 6.14, "temp": 28.8, "sal": 14.9, "alk": 118, "nitrit": 0.018, "po4": 0.191}, {"date": "09/06", "fullDate": "2026-06-09", "age": 39, "tan": 0.724, "ph": 7.74, "do": 6.39, "temp": 29.2, "sal": 15.2, "alk": 120, "nitrit": 0.021, "po4": 0.087}, {"date": "10/06", "fullDate": "2026-06-10", "age": 40, "tan": 0.723, "ph": 7.73, "do": 6.35, "temp": 29.7, "sal": 14.9, "alk": 117, "nitrit": 0.05, "po4": 0.126}, {"date": "11/06", "fullDate": "2026-06-11", "age": 41, "tan": 0.702, "ph": 7.66, "do": 6.07, "temp": 29.5, "sal": 15.2, "alk": 119, "nitrit": 0.013, "po4": 0.107}, {"date": "12/06", "fullDate": "2026-06-12", "age": 42, "tan": 0.859, "ph": 7.81, "do": 6.58, "temp": 29.7, "sal": 14.7, "alk": 122, "nitrit": 0.037, "po4": 0.131}, {"date": "13/06", "fullDate": "2026-06-13", "age": 43, "tan": 0.805, "ph": 7.84, "do": 6.07, "temp": 29.3, "sal": 15.0, "alk": 125, "nitrit": 0.045, "po4": 0.09}, {"date": "14/06", "fullDate": "2026-06-14", "age": 44, "tan": 0.875, "ph": 7.7, "do": 6.55, "temp": 29.8, "sal": 14.9, "alk": 121, "nitrit": 0.034, "po4": 0.073}, {"date": "15/06", "fullDate": "2026-06-15", "age": 45, "tan": 0.949, "ph": 7.81, "do": 6.47, "temp": 29.5, "sal": 14.7, "alk": 118, "nitrit": 0.011, "po4": 0.189}, {"date": "16/06", "fullDate": "2026-06-16", "age": 46, "tan": 1.004, "ph": 7.9, "do": 6.18, "temp": 29.1, "sal": 15.2, "alk": 124, "nitrit": 0.013, "po4": 0.123}, {"date": "17/06", "fullDate": "2026-06-17", "age": 47, "tan": 0.939, "ph": 7.88, "do": 6.46, "temp": 29.2, "sal": 15.0, "alk": 120, "nitrit": 0.021, "po4": 0.181}, {"date": "18/06", "fullDate": "2026-06-18", "age": 48, "tan": 1.025, "ph": 7.71, "do": 6.32, "temp": 29.7, "sal": 14.8, "alk": 118, "nitrit": 0.05, "po4": 0.147}, {"date": "19/06", "fullDate": "2026-06-19", "age": 49, "tan": 1.067, "ph": 7.81, "do": 6.07, "temp": 29.3, "sal": 14.9, "alk": 121, "nitrit": 0.019, "po4": 0.083}], "Ao 02 — Khu A": [{"date": "31/05", "fullDate": "2026-05-31", "age": 25, "tan": 0.459, "ph": 7.64, "do": 5.84, "temp": 29.2, "sal": 14.2, "alk": 111, "nitrit": 0.02, "po4": 0.15}, {"date": "01/06", "fullDate": "2026-06-01", "age": 26, "tan": 0.498, "ph": 7.49, "do": 6.26, "temp": 28.9, "sal": 14.0, "alk": 118, "nitrit": 0.042, "po4": 0.079}, {"date": "02/06", "fullDate": "2026-06-02", "age": 27, "tan": 0.503, "ph": 7.58, "do": 5.95, "temp": 28.9, "sal": 14.1, "alk": 117, "nitrit": 0.049, "po4": 0.065}, {"date": "03/06", "fullDate": "2026-06-03", "age": 28, "tan": 0.562, "ph": 7.55, "do": 6.22, "temp": 28.7, "sal": 13.8, "alk": 114, "nitrit": 0.027, "po4": 0.092}, {"date": "04/06", "fullDate": "2026-06-04", "age": 29, "tan": 0.562, "ph": 7.73, "do": 5.97, "temp": 29.3, "sal": 14.0, "alk": 111, "nitrit": 0.05, "po4": 0.175}, {"date": "05/06", "fullDate": "2026-06-05", "age": 30, "tan": 0.676, "ph": 7.73, "do": 6.21, "temp": 28.7, "sal": 14.0, "alk": 112, "nitrit": 0.026, "po4": 0.059}, {"date": "06/06", "fullDate": "2026-06-06", "age": 31, "tan": 0.619, "ph": 7.75, "do": 5.86, "temp": 29.3, "sal": 14.0, "alk": 114, "nitrit": 0.048, "po4": 0.199}, {"date": "07/06", "fullDate": "2026-06-07", "age": 32, "tan": 0.662, "ph": 7.67, "do": 5.79, "temp": 28.9, "sal": 14.3, "alk": 116, "nitrit": 0.032, "po4": 0.162}, {"date": "08/06", "fullDate": "2026-06-08", "age": 33, "tan": 0.617, "ph": 7.63, "do": 6.0, "temp": 29.4, "sal": 13.8, "alk": 120, "nitrit": 0.013, "po4": 0.078}, {"date": "09/06", "fullDate": "2026-06-09", "age": 34, "tan": 0.707, "ph": 7.65, "do": 5.84, "temp": 28.7, "sal": 14.2, "alk": 112, "nitrit": 0.034, "po4": 0.143}, {"date": "10/06", "fullDate": "2026-06-10", "age": 35, "tan": 0.704, "ph": 7.63, "do": 6.01, "temp": 29.5, "sal": 13.8, "alk": 117, "nitrit": 0.02, "po4": 0.109}, {"date": "11/06", "fullDate": "2026-06-11", "age": 36, "tan": 0.757, "ph": 7.54, "do": 5.89, "temp": 29.4, "sal": 13.7, "alk": 115, "nitrit": 0.05, "po4": 0.199}, {"date": "12/06", "fullDate": "2026-06-12", "age": 37, "tan": 0.7, "ph": 7.51, "do": 5.86, "temp": 29.6, "sal": 14.2, "alk": 119, "nitrit": 0.025, "po4": 0.074}, {"date": "13/06", "fullDate": "2026-06-13", "age": 38, "tan": 0.818, "ph": 7.66, "do": 6.07, "temp": 29.6, "sal": 14.1, "alk": 110, "nitrit": 0.043, "po4": 0.095}, {"date": "14/06", "fullDate": "2026-06-14", "age": 39, "tan": 0.816, "ph": 7.73, "do": 5.78, "temp": 28.9, "sal": 13.8, "alk": 116, "nitrit": 0.021, "po4": 0.141}, {"date": "15/06", "fullDate": "2026-06-15", "age": 40, "tan": 0.843, "ph": 7.51, "do": 6.08, "temp": 29.0, "sal": 14.0, "alk": 119, "nitrit": 0.044, "po4": 0.064}, {"date": "16/06", "fullDate": "2026-06-16", "age": 41, "tan": 0.825, "ph": 7.53, "do": 5.7, "temp": 29.5, "sal": 14.1, "alk": 113, "nitrit": 0.04, "po4": 0.133}, {"date": "17/06", "fullDate": "2026-06-17", "age": 42, "tan": 0.846, "ph": 7.45, "do": 5.75, "temp": 29.6, "sal": 14.2, "alk": 115, "nitrit": 0.043, "po4": 0.137}, {"date": "18/06", "fullDate": "2026-06-18", "age": 43, "tan": 0.829, "ph": 7.49, "do": 5.88, "temp": 29.7, "sal": 14.2, "alk": 119, "nitrit": 0.046, "po4": 0.082}, {"date": "19/06", "fullDate": "2026-06-19", "age": 44, "tan": 0.862, "ph": 7.48, "do": 6.17, "temp": 29.7, "sal": 13.9, "alk": 116, "nitrit": 0.016, "po4": 0.189}], "Ao 03 — Khu B": [{"date": "31/05", "fullDate": "2026-05-31", "age": 40, "tan": 0.212, "ph": 8.04, "do": 6.99, "temp": 29.7, "sal": 15.7, "alk": 127, "nitrit": 0.023, "po4": 0.19}, {"date": "01/06", "fullDate": "2026-06-01", "age": 41, "tan": 0.214, "ph": 8.01, "do": 6.99, "temp": 29.2, "sal": 16.2, "alk": 121, "nitrit": 0.045, "po4": 0.179}, {"date": "02/06", "fullDate": "2026-06-02", "age": 42, "tan": 0.149, "ph": 7.99, "do": 6.78, "temp": 29.2, "sal": 16.2, "alk": 122, "nitrit": 0.011, "po4": 0.079}, {"date": "03/06", "fullDate": "2026-06-03", "age": 43, "tan": 0.173, "ph": 8.01, "do": 7.08, "temp": 29.2, "sal": 16.1, "alk": 124, "nitrit": 0.049, "po4": 0.13}, {"date": "04/06", "fullDate": "2026-06-04", "age": 44, "tan": 0.262, "ph": 7.78, "do": 7.08, "temp": 29.2, "sal": 16.3, "alk": 123, "nitrit": 0.014, "po4": 0.115}, {"date": "05/06", "fullDate": "2026-06-05", "age": 45, "tan": 0.245, "ph": 7.84, "do": 6.86, "temp": 29.5, "sal": 15.9, "alk": 126, "nitrit": 0.02, "po4": 0.156}, {"date": "06/06", "fullDate": "2026-06-06", "age": 46, "tan": 0.16, "ph": 8.03, "do": 6.82, "temp": 29.7, "sal": 16.1, "alk": 127, "nitrit": 0.025, "po4": 0.06}, {"date": "07/06", "fullDate": "2026-06-07", "age": 47, "tan": 0.256, "ph": 7.85, "do": 6.69, "temp": 29.8, "sal": 16.1, "alk": 123, "nitrit": 0.022, "po4": 0.111}, {"date": "08/06", "fullDate": "2026-06-08", "age": 48, "tan": 0.232, "ph": 7.84, "do": 6.58, "temp": 29.5, "sal": 16.3, "alk": 127, "nitrit": 0.046, "po4": 0.142}, {"date": "09/06", "fullDate": "2026-06-09", "age": 49, "tan": 0.229, "ph": 7.91, "do": 6.5, "temp": 29.4, "sal": 16.0, "alk": 126, "nitrit": 0.036, "po4": 0.12}, {"date": "10/06", "fullDate": "2026-06-10", "age": 50, "tan": 0.257, "ph": 7.81, "do": 6.78, "temp": 30.0, "sal": 16.2, "alk": 122, "nitrit": 0.013, "po4": 0.127}, {"date": "11/06", "fullDate": "2026-06-11", "age": 51, "tan": 0.292, "ph": 7.85, "do": 6.99, "temp": 29.9, "sal": 16.1, "alk": 122, "nitrit": 0.018, "po4": 0.054}, {"date": "12/06", "fullDate": "2026-06-12", "age": 52, "tan": 0.252, "ph": 7.89, "do": 7.01, "temp": 29.3, "sal": 15.9, "alk": 126, "nitrit": 0.018, "po4": 0.154}, {"date": "13/06", "fullDate": "2026-06-13", "age": 53, "tan": 0.294, "ph": 7.82, "do": 6.89, "temp": 29.2, "sal": 16.2, "alk": 128, "nitrit": 0.014, "po4": 0.114}, {"date": "14/06", "fullDate": "2026-06-14", "age": 54, "tan": 0.263, "ph": 8.04, "do": 6.81, "temp": 29.3, "sal": 15.8, "alk": 128, "nitrit": 0.028, "po4": 0.17}, {"date": "15/06", "fullDate": "2026-06-15", "age": 55, "tan": 0.337, "ph": 8.05, "do": 6.86, "temp": 30.1, "sal": 16.2, "alk": 126, "nitrit": 0.039, "po4": 0.126}, {"date": "16/06", "fullDate": "2026-06-16", "age": 56, "tan": 0.368, "ph": 7.91, "do": 7.04, "temp": 30.0, "sal": 16.0, "alk": 123, "nitrit": 0.02, "po4": 0.146}, {"date": "17/06", "fullDate": "2026-06-17", "age": 57, "tan": 0.37, "ph": 7.91, "do": 6.88, "temp": 29.6, "sal": 15.7, "alk": 123, "nitrit": 0.021, "po4": 0.098}, {"date": "18/06", "fullDate": "2026-06-18", "age": 58, "tan": 0.35, "ph": 7.79, "do": 6.64, "temp": 30.0, "sal": 16.1, "alk": 121, "nitrit": 0.026, "po4": 0.131}, {"date": "19/06", "fullDate": "2026-06-19", "age": 59, "tan": 0.344, "ph": 7.81, "do": 6.75, "temp": 30.2, "sal": 16.1, "alk": 127, "nitrit": 0.044, "po4": 0.165}], "Ao 04 — Khu B": [{"date": "31/05", "fullDate": "2026-05-31", "age": 50, "tan": 0.799, "ph": 7.35, "do": 5.61, "temp": 29.9, "sal": 15.7, "alk": 115, "nitrit": 0.027, "po4": 0.162}, {"date": "01/06", "fullDate": "2026-06-01", "age": 51, "tan": 0.881, "ph": 7.53, "do": 5.53, "temp": 29.4, "sal": 15.5, "alk": 105, "nitrit": 0.023, "po4": 0.152}, {"date": "02/06", "fullDate": "2026-06-02", "age": 52, "tan": 0.923, "ph": 7.4, "do": 5.68, "temp": 29.4, "sal": 15.6, "alk": 105, "nitrit": 0.026, "po4": 0.135}, {"date": "03/06", "fullDate": "2026-06-03", "age": 53, "tan": 0.934, "ph": 7.54, "do": 5.48, "temp": 29.7, "sal": 15.2, "alk": 109, "nitrit": 0.018, "po4": 0.099}, {"date": "04/06", "fullDate": "2026-06-04", "age": 54, "tan": 1.089, "ph": 7.46, "do": 5.85, "temp": 30.1, "sal": 15.4, "alk": 106, "nitrit": 0.011, "po4": 0.131}, {"date": "05/06", "fullDate": "2026-06-05", "age": 55, "tan": 1.18, "ph": 7.45, "do": 5.79, "temp": 30.0, "sal": 15.6, "alk": 113, "nitrit": 0.048, "po4": 0.08}, {"date": "06/06", "fullDate": "2026-06-06", "age": 56, "tan": 1.113, "ph": 7.4, "do": 5.48, "temp": 30.0, "sal": 15.5, "alk": 107, "nitrit": 0.038, "po4": 0.165}, {"date": "07/06", "fullDate": "2026-06-07", "age": 57, "tan": 1.192, "ph": 7.53, "do": 5.85, "temp": 29.5, "sal": 15.7, "alk": 115, "nitrit": 0.014, "po4": 0.054}, {"date": "08/06", "fullDate": "2026-06-08", "age": 58, "tan": 1.271, "ph": 7.55, "do": 5.97, "temp": 29.8, "sal": 15.6, "alk": 106, "nitrit": 0.038, "po4": 0.144}, {"date": "09/06", "fullDate": "2026-06-09", "age": 59, "tan": 1.303, "ph": 7.58, "do": 5.91, "temp": 30.0, "sal": 15.3, "alk": 115, "nitrit": 0.041, "po4": 0.102}, {"date": "10/06", "fullDate": "2026-06-10", "age": 60, "tan": 1.406, "ph": 7.46, "do": 5.7, "temp": 29.8, "sal": 15.7, "alk": 113, "nitrit": 0.014, "po4": 0.194}, {"date": "11/06", "fullDate": "2026-06-11", "age": 61, "tan": 1.493, "ph": 7.6, "do": 5.82, "temp": 29.9, "sal": 15.6, "alk": 115, "nitrit": 0.021, "po4": 0.171}, {"date": "12/06", "fullDate": "2026-06-12", "age": 62, "tan": 1.54, "ph": 7.5, "do": 5.66, "temp": 30.2, "sal": 15.4, "alk": 114, "nitrit": 0.043, "po4": 0.063}, {"date": "13/06", "fullDate": "2026-06-13", "age": 63, "tan": 1.645, "ph": 7.42, "do": 5.68, "temp": 30.1, "sal": 15.4, "alk": 105, "nitrit": 0.044, "po4": 0.077}, {"date": "14/06", "fullDate": "2026-06-14", "age": 64, "tan": 1.618, "ph": 7.59, "do": 5.6, "temp": 30.4, "sal": 15.6, "alk": 108, "nitrit": 0.01, "po4": 0.192}, {"date": "15/06", "fullDate": "2026-06-15", "age": 65, "tan": 1.661, "ph": 7.57, "do": 5.69, "temp": 30.3, "sal": 15.6, "alk": 111, "nitrit": 0.03, "po4": 0.169}, {"date": "16/06", "fullDate": "2026-06-16", "age": 66, "tan": 1.722, "ph": 7.42, "do": 5.82, "temp": 29.9, "sal": 15.5, "alk": 110, "nitrit": 0.031, "po4": 0.114}, {"date": "17/06", "fullDate": "2026-06-17", "age": 67, "tan": 1.867, "ph": 7.45, "do": 5.82, "temp": 29.9, "sal": 15.4, "alk": 106, "nitrit": 0.018, "po4": 0.068}, {"date": "18/06", "fullDate": "2026-06-18", "age": 68, "tan": 1.9, "ph": 7.58, "do": 5.51, "temp": 29.9, "sal": 15.5, "alk": 112, "nitrit": 0.049, "po4": 0.129}, {"date": "19/06", "fullDate": "2026-06-19", "age": 69, "tan": 1.927, "ph": 7.38, "do": 5.52, "temp": 29.9, "sal": 15.3, "alk": 105, "nitrit": 0.031, "po4": 0.091}]};
+// ═══ DỮ LIỆU AO NUÔI — tải thật từ Supabase, xem loadPondsData() ═══
+let PONDS_DATA = {};
+let POND_IDS = {}; // tên ao -> id (uuid) trong Supabase
 let PONDS = Object.keys(PONDS_DATA);
 let currentPond = PONDS[0];
 let totalPredicts = 0;
@@ -904,20 +906,77 @@ function updatePond() {
   updateEntryBanner();
 }
 
+function mapMeasurementRow(row) {
+  const d = new Date(row.measured_at);
+  const dateStr = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0');
+  const fullDate = row.measured_at.slice(0,10);
+  return {
+    date: dateStr, fullDate, age: row.shrimp_age || 0,
+    tan: row.tan ?? 0, ph: row.ph ?? 0, do: row.do_val ?? 0, temp: row.temperature ?? 0,
+    sal: row.salinity ?? 0, alk: row.alkalinity ?? 0,
+    nitrit: row.nitrite ?? 0, po4: row.phosphate ?? 0, id: row.id
+  };
+}
+
+async function loadPondsData() {
+  if (!sb) return;
+  try {
+    const { data: ponds, error } = await sb.from('ponds').select('*').order('created_at');
+    if (error) throw error;
+
+    const newData = {};
+    const newIds = {};
+    for (const p of (ponds || [])) {
+      newIds[p.name] = p.id;
+      const { data: rows, error: mErr } = await sb.from('measurements').select('*').eq('pond_id', p.id).order('measured_at');
+      if (mErr) throw mErr;
+      newData[p.name] = (rows || []).map(mapMeasurementRow);
+    }
+
+    PONDS_DATA = newData;
+    POND_IDS = newIds;
+    PONDS = Object.keys(PONDS_DATA);
+    currentPond = PONDS[0];
+
+    initPondSelector();
+    renderPondListTable();
+    renderMonitorTable();
+    updateEntryBanner();
+    renderDashboard();
+  } catch (e) {
+    console.error('Lỗi tải dữ liệu từ Supabase:', e);
+  }
+}
+
+function formatUpdateTime(fullDateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(fullDateStr); d.setHours(0,0,0,0);
+  const diffDays = Math.round((today - d) / 86400000);
+  if (diffDays === 0) return 'Hôm nay 06:00';
+  if (diffDays === 1) return 'Hôm qua 06:00';
+  if (diffDays > 1) return diffDays + ' ngày trước';
+  return '06:00';
+}
+
 function classifyTAN(v) { if (v < 0.5) return 'safe'; if (v < 1.0) return 'warning'; return 'danger'; }
 function classifyKiem(v) { if (v >= 80 && v <= 160) return 'safe'; if (v >= 60 && v < 80) return 'warning'; return 'danger'; }
 function classifyPH(v) { if (v >= 7.5 && v <= 8.5) return 'safe'; return 'warning'; }
 function classifyDO(v) { if (v >= 5) return 'safe'; if (v >= 4) return 'warning'; return 'danger'; }
 function classifyTemp(v) { if (v >= 26 && v <= 32) return 'safe'; return 'warning'; }
 
+const UNIT_BASE = {tan:'mg/L', ph:'—', do:'mg/L', kiem:'mg/L CaCO₃', temp:'°C', sal:'‰'};
+const STATUS_LABEL = {safe:'An toàn', warning:'Cần chú ý', danger:'Nguy hiểm'};
+
 function setCard(prefix, value, decimals, statusFn) {
   const numEl = document.getElementById('stat-' + prefix);
   const progEl = document.getElementById('prog-' + prefix);
+  const unitEl = document.getElementById('unit-' + prefix);
   if (!numEl) return;
   numEl.textContent = value.toFixed(decimals);
   const status = statusFn(value);
   const card = numEl.closest('.stat-card');
   card.className = 'stat-card sc-' + (status === 'safe' ? 'green' : status === 'warning' ? 'orange' : 'red');
+  if (unitEl) unitEl.textContent = UNIT_BASE[prefix] + ' · ' + STATUS_LABEL[status];
   let pct = 50;
   if (prefix === 'tan') pct = Math.min(100, (value / 1.5) * 100);
   if (prefix === 'ph') pct = Math.min(100, (value / 10) * 100);
@@ -928,16 +987,39 @@ function setCard(prefix, value, decimals, statusFn) {
   progEl.style.width = pct + '%';
 }
 
+function clearDashboardCards() {
+  ['tan','ph','do','kiem','temp','sal'].forEach(prefix => {
+    const numEl = document.getElementById('stat-' + prefix);
+    const progEl = document.getElementById('prog-' + prefix);
+    const unitEl = document.getElementById('unit-' + prefix);
+    const trendEl = document.getElementById('trend-' + prefix);
+    if (!numEl) return;
+    numEl.textContent = '—';
+    const card = numEl.closest('.stat-card');
+    card.className = 'stat-card sc-muted';
+    if (unitEl) unitEl.textContent = UNIT_BASE[prefix] + ' · Chưa có dữ liệu';
+    if (progEl) progEl.style.width = '0%';
+    if (trendEl) { trendEl.className = 'stat-trend tr-ok'; trendEl.innerHTML = '<i class="ti ti-minus" style="font-size:9px"></i>—'; }
+  });
+  document.getElementById('pb-name').textContent = currentPond || 'Chưa có ao nào';
+  document.getElementById('pb-age').textContent = '— ngày';
+  document.getElementById('pb-update').textContent = 'Chưa có dữ liệu';
+  const alertList = document.getElementById('alert-list');
+  if (alertList) alertList.innerHTML = '';
+  const countEl = document.getElementById('alert-count');
+  if (countEl) countEl.textContent = '0 cảnh báo';
+}
+
 // ── TỔNG QUAN TRẠI ──
 function renderDashboard() {
   const data = PONDS_DATA[currentPond];
-  if (!data || data.length === 0) return;
+  if (!data || data.length === 0) { clearDashboardCards(); return; }
   const latest = data[data.length - 1];
   const prev = data[data.length - 2] || latest;
 
   document.getElementById('pb-name').textContent = currentPond;
   document.getElementById('pb-age').textContent = latest.age + ' ngày';
-  document.getElementById('pb-update').textContent = 'Hôm nay 06:00 (' + latest.date + ')';
+  document.getElementById('pb-update').textContent = formatUpdateTime(latest.fullDate) + ' (' + latest.date + ')';
 
   setCard('tan', latest.tan, 3, classifyTAN);
   setCard('ph', latest.ph, 2, classifyPH);
@@ -972,9 +1054,10 @@ function setTrend(id, diff, decimals) {
 function renderAlerts(latest) {
   const alerts = [];
   const tanStatus = classifyTAN(latest.tan);
-  if (tanStatus === 'danger') alerts.push({cls:'al-danger', title:'TAN vượt ngưỡng nguy hiểm', desc:latest.tan.toFixed(3)+' mg/L — Cần can thiệp ngay', time:'Hôm nay 06:00'});
-  else if (tanStatus === 'warning') alerts.push({cls:'al-warn', title:'TAN đang tăng', desc:latest.tan.toFixed(3)+' mg/L — Theo dõi chặt', time:'Hôm nay 06:00'});
-  if (latest.temp > 30) alerts.push({cls:'al-warn', title:'Nhiệt độ cao', desc:latest.temp+'\u00b0C — Theo dõi sức khỏe tôm', time:'Hôm nay 06:00'});
+  const alertTime = formatUpdateTime(latest.fullDate);
+  if (tanStatus === 'danger') alerts.push({cls:'al-danger', title:'TAN vượt ngưỡng nguy hiểm', desc:latest.tan.toFixed(3)+' mg/L — Cần can thiệp ngay', time:alertTime});
+  else if (tanStatus === 'warning') alerts.push({cls:'al-warn', title:'TAN đang tăng', desc:latest.tan.toFixed(3)+' mg/L — Theo dõi chặt', time:alertTime});
+  if (latest.temp > 30) alerts.push({cls:'al-warn', title:'Nhiệt độ cao', desc:latest.temp+'\u00b0C — Theo dõi sức khỏe tôm', time:alertTime});
   alerts.push({cls:'al-info', title:'Lịch cho ăn buổi sáng', desc:currentPond+' — 06:30 sáng', time:'Nhắc nhở'});
 
   const countEl = document.getElementById('alert-count');
@@ -1004,7 +1087,8 @@ function renderPondBarStats() {
   document.getElementById('pb-safe').textContent = safe;
 }
 
-function renderCharts(data) {
+function renderCharts(fullData) {
+  const data = fullData.slice(-7);
   const labels = data.map(r => r.date);
 
   if (window._chartTanDo) window._chartTanDo.destroy();
@@ -1102,7 +1186,7 @@ document.addEventListener('change', (e) => {
   }
 });
 
-function saveMeasurement() {
+async function saveMeasurement() {
   const tan = parseFloat(document.getElementById('m-tan').value);
   const ph = parseFloat(document.getElementById('m-ph').value);
   const do_ = parseFloat(document.getElementById('m-do').value);
@@ -1117,9 +1201,23 @@ function saveMeasurement() {
     return;
   }
 
+  const pondId = POND_IDS[currentPond];
+  if (!sb || !pondId) { alert('Không tìm thấy ao trong hệ thống dữ liệu.'); return; }
+
   const today = new Date();
   const dateStr = today.getDate().toString().padStart(2,'0') + '/' + (today.getMonth()+1).toString().padStart(2,'0');
   const fullDate = today.toISOString().slice(0,10);
+
+  try {
+    const { error } = await sb.from('measurements').insert({
+      pond_id: pondId, measured_at: today.toISOString(),
+      tan, ph, do_val: do_, temperature: temp, salinity: sal, alkalinity: alk, shrimp_age: age
+    });
+    if (error) throw error;
+  } catch (e) {
+    alert('Lỗi khi lưu số liệu vào hệ thống: ' + (e.message || e));
+    return;
+  }
 
   const newRecord = {
     date: dateStr, fullDate, age, tan, ph, do: do_, temp, sal, alk,
@@ -1297,7 +1395,7 @@ function renderPondListTable() {
   }).join('');
 }
 
-function savePond() {
+async function savePond() {
   const name = document.getElementById('np-name').value.trim();
   const area = document.getElementById('np-area').value.trim();
   const date = document.getElementById('np-date').value;
@@ -1316,6 +1414,29 @@ function savePond() {
   const today = new Date();
   const dateStr = today.getDate().toString().padStart(2,'0') + '/' + (today.getMonth()+1).toString().padStart(2,'0');
   const fullDate = today.toISOString().slice(0,10);
+
+  if (!sb) { alert('Không kết nối được hệ thống dữ liệu.'); return; }
+
+  let pondId;
+  try {
+    const { data: pondRow, error: pondErr } = await sb.from('ponds').insert({
+      name, area: area || null, species: 'Tôm thẻ chân trắng',
+      stocking_date: date || fullDate
+    }).select().single();
+    if (pondErr) throw pondErr;
+    pondId = pondRow.id;
+
+    const { error: measErr } = await sb.from('measurements').insert({
+      pond_id: pondId, measured_at: today.toISOString(),
+      tan, ph, do_val: do_, temperature: temp, salinity: sal, alkalinity: alk, shrimp_age: age
+    });
+    if (measErr) throw measErr;
+  } catch (e) {
+    alert('Lỗi khi lưu ao mới vào hệ thống: ' + (e.message || e));
+    return;
+  }
+
+  POND_IDS[name] = pondId;
 
   // Tạo ao mới với 1 bản ghi đầu tiên
   PONDS_DATA[name] = [{
@@ -1346,8 +1467,7 @@ function savePond() {
 window.addEventListener('load', () => {
   initSupabase();
   checkSession();
-  initPondSelector();
-  renderDashboard();
+  loadPondsData();
 });
 </script>
 </body>
