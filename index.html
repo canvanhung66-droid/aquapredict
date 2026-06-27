@@ -893,8 +893,22 @@ function prefillPredictForm() {
   if (!el1 || !el2) return;
   if (!data || data.length === 0) return;
   const n = data.length;
-  el1.value = data[n - 1].tan.toFixed(3);
-  el2.value = (n >= 2 ? data[n - 2].tan : data[n - 1].tan).toFixed(3);
+  const latest = data[n - 1];
+  el1.value = latest.tan.toFixed(3);
+  el2.value = (n >= 2 ? data[n - 2].tan : latest.tan).toFixed(3);
+
+  const setIfPresent = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.value = val;
+  };
+  setIfPresent('Tuoi_tom', latest.age);
+  setIfPresent('Nhiet_do', latest.temp);
+  setIfPresent('pH', latest.ph);
+  setIfPresent('DO', latest.do);
+  setIfPresent('Do_man', latest.sal);
+  setIfPresent('Do_kiem', latest.alk);
+  setIfPresent('Nitrit', latest.nitrit);
+  setIfPresent('Phosphate', latest.po4);
 }
 
 function initPondSelector() {
