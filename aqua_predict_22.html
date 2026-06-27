@@ -20,11 +20,13 @@
   --r:14px;--r-sm:9px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);min-height:100vh;font-size:14px}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden}
+.tbl{min-width:0}
+.card-bd{max-width:100%}
 .app{display:flex;min-height:100vh}
 .sidebar{width:236px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .25s}
-.main{margin-left:236px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.main{margin-left:236px;flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh}
 .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:199}
 .sb-backdrop.show{display:block}
 .sb-icon{width:38px;height:38px;background:linear-gradient(135deg,#F5A623,#D4891A);border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px;flex-shrink:0;box-shadow:0 3px 8px rgba(245,166,35,.35)}
@@ -47,7 +49,7 @@ body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe 
 .tb-right{display:flex;align-items:center;gap:8px}
 .tb-time{font-size:12px;color:var(--text2);font-weight:500}
 .icon-btn{width:34px;height:34px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--white);cursor:pointer;color:var(--text2);font-size:17px;display:flex;align-items:center;justify-content:center}
-.content{padding:22px;flex:1}
+.content{padding:22px;flex:1;min-width:0}
 .page{display:none}.page.active{display:block}
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .sec-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:7px}
@@ -213,6 +215,8 @@ body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe 
   .form-2col{grid-template-columns:1fr}
   .result-meta-row{grid-template-columns:1fr}
   .predict-layout{grid-template-columns:1fr}
+  .tbl{font-size:12px}
+  .tbl td[style*="display:flex"]{flex-direction:column}
 }
 </style>
 </head>
