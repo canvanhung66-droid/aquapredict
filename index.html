@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>AquaPredict — Quản lý ao nuôi tôm</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --primary:#F5A623;--primary-light:#FFF3E0;--primary-dark:#D4891A;
+  --green:#2E7D32;--green-bg:#E8F5E9;
+  --orange:#E65100;--orange-bg:#FFF3E0;
+  --red:#B71C1C;--red-bg:#FFEBEE;
+  --gray:#F4F6F9;--border:#E4E8EE;
+  --text:#1C2B3A;--text2:#6B7A8D;
+  --white:#fff;
+  --sh:0 2px 8px rgba(0,0,0,.07);--sh-md:0 4px 16px rgba(0,0,0,.1);
+  --r:14px;--r-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);min-height:100vh;font-size:14px}
+.app{display:flex;min-height:100vh}
+.sidebar{width:236px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .25s}
+.main{margin-left:236px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:199}
+.sb-backdrop.show{display:block}
+.sb-icon{width:38px;height:38px;background:linear-gradient(135deg,#F5A623,#D4891A);border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px;flex-shrink:0;box-shadow:0 3px 8px rgba(245,166,35,.35)}
+.sb-name{font-size:15px;font-weight:800;color:var(--primary-dark);line-height:1.1}
+.sb-tagline{font-size:10px;color:var(--text2);margin-top:1px}
+.sb-nav{padding:10px 10px;flex:1;overflow-y:auto}
+.sb-sec{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.08em;padding:10px 8px 5px;margin-top:6px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r-sm);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left;margin-bottom:1px;transition:.15s}
+.sb-item:hover{background:var(--gray);color:var(--text)}
+.sb-item.active{background:var(--primary-light);color:var(--primary-dark);font-weight:700}
+.sb-item i{font-size:17px;flex-shrink:0}
+.sb-pond{padding:12px;border-top:1px solid var(--border)}
+.sb-pond-label{font-size:10px;font-weight:700;color:var(--text2);margin-bottom:6px;letter-spacing:.05em}
+.pond-sel{width:100%;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;font-size:13px;color:var(--text);background:var(--gray);outline:none;cursor:pointer;font-weight:600}
+.pond-sel:focus{border-color:var(--primary)}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);height:58px;padding:0 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh)}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-title{font-size:16px;font-weight:700}
+.tb-badge{background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;display:flex;align-items:center;gap:3px}
+.tb-right{display:flex;align-items:center;gap:8px}
+.tb-time{font-size:12px;color:var(--text2);font-weight:500}
+.icon-btn{width:34px;height:34px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--white);cursor:pointer;color:var(--text2);font-size:17px;display:flex;align-items:center;justify-content:center}
+.content{padding:22px;flex:1}
+.page{display:none}.page.active{display:block}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.sec-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:7px}
+.sec-title i{color:var(--primary-dark);font-size:17px}
+.pond-bar{background:linear-gradient(135deg,#F5A623,#D4891A);border-radius:var(--r);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;box-shadow:var(--sh-md);flex-wrap:wrap;gap:12px}
+.pond-bar-left{display:flex;align-items:center;gap:14px}
+.pond-bar-avatar{width:46px;height:46px;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff}
+.pond-bar-name{font-size:16px;font-weight:800;color:#fff}
+.pond-bar-sub{font-size:12px;color:rgba(255,255,255,.85);margin-top:2px}
+.pond-bar-stats{display:flex;gap:20px}
+.pond-stat{text-align:center}
+.pond-stat-val{font-size:18px;font-weight:800;color:#fff}
+.pond-stat-lbl{font-size:10px;color:rgba(255,255,255,.75);margin-top:1px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:15px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:.2s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc-blue::before{background:var(--primary)}.sc-green::before{background:var(--green)}.sc-orange::before{background:var(--orange)}.sc-red::before{background:var(--red)}.sc-muted::before{background:var(--border)}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.stat-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.sc-blue .stat-ico{background:var(--primary-light);color:var(--primary-dark)}
+.sc-green .stat-ico{background:var(--green-bg);color:var(--green)}
+.sc-orange .stat-ico{background:var(--orange-bg);color:var(--orange)}
+.sc-red .stat-ico{background:var(--red-bg);color:var(--red)}
+.sc-muted .stat-ico{background:var(--gray);color:var(--text2)}
+.stat-trend{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;display:flex;align-items:center;gap:2px}
+.tr-up{background:#FFEBEE;color:var(--red)}.tr-dn{background:#E8F5E9;color:var(--green)}.tr-ok{background:#FFF3E0;color:var(--primary-dark)}
+.stat-lbl{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:3px}
+.stat-num{font-size:24px;font-weight:900;line-height:1}
+.sc-blue .stat-num{color:var(--primary-dark)}.sc-green .stat-num{color:var(--green)}.sc-orange .stat-num{color:var(--orange)}.sc-red .stat-num{color:var(--red)}.sc-muted .stat-num{color:var(--text2)}
+.stat-unit{font-size:10px;color:var(--text2);margin-top:2px;font-weight:500}
+.stat-prog{height:4px;background:#EEF0F4;border-radius:2px;margin-top:10px;overflow:hidden}
+.stat-prog-fill{height:100%;border-radius:2px;transition:width .4s}
+.sc-blue .stat-prog-fill{background:var(--primary)}.sc-green .stat-prog-fill{background:var(--green)}.sc-orange .stat-prog-fill{background:var(--orange)}.sc-red .stat-prog-fill{background:var(--red)}.sc-muted .stat-prog-fill{background:var(--border)}
+.card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden;margin-bottom:16px}
+.card-hd{padding:15px 18px 0;display:flex;align-items:center;justify-content:space-between}
+.card-ttl{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.card-ttl i{color:var(--primary-dark);font-size:15px}
+.card-bd{padding:14px 18px 18px}
+.btn-xs{font-size:11px;font-weight:600;padding:5px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--white);cursor:pointer;color:var(--text2)}
+.alert-list{display:flex;flex-direction:column;gap:8px}
+.alert{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:var(--r-sm);border:1px solid}
+.al-danger{background:var(--red-bg);border-color:#FFCDD2}
+.al-warn{background:var(--orange-bg);border-color:#FFCC80}
+.al-info{background:var(--primary-light);border-color:#FFE0A3}
+.al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.al-danger .al-dot{background:var(--red)}.al-warn .al-dot{background:var(--orange)}.al-info .al-dot{background:var(--primary-dark)}
+.al-title{font-size:13px;font-weight:700}.al-desc{font-size:12px;margin-top:1px;line-height:1.4}.al-time{font-size:11px;margin-top:3px;opacity:.65}
+.al-danger .al-title,.al-danger .al-desc{color:var(--red)}
+.al-warn .al-title,.al-warn .al-desc{color:var(--orange)}
+.al-info .al-title,.al-info .al-desc{color:var(--primary-dark)}
+.chart-box{position:relative;height:190px}
+.chart-3col{display:grid;grid-template-columns:1fr;gap:16px}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px}
+.f-group{display:flex;flex-direction:column;gap:4px}
+.f-group.full{grid-column:1/-1}
+.f-label{font-size:11px;font-weight:700;color:var(--text2)}
+.f-input{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;font-size:14px;color:var(--text);background:#FAFBFD;outline:none;width:100%;transition:.15s;-webkit-appearance:none}
+.f-input:focus{border-color:var(--primary);background:var(--white);box-shadow:0 0 0 3px rgba(245,166,35,.12)}
+.f-select{cursor:pointer}
+.f-sec{margin-bottom:18px}
+.f-sec-title{font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px}
+.f-sec-title i{font-size:13px;color:var(--primary-dark)}
+.adv-btn{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--primary-dark);background:var(--primary-light);border:none;padding:7px 13px;border-radius:var(--r-sm);cursor:pointer;margin-bottom:12px}
+.adv-body{display:none;padding:12px;background:var(--gray);border-radius:var(--r-sm);margin-bottom:12px}.adv-body.open{display:block}
+.predict-btn{background:linear-gradient(135deg,#F5A623,#D4891A);color:#fff;border:none;border-radius:var(--r);padding:14px 20px;font-size:15px;font-weight:700;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(245,166,35,.35);transition:.15s;margin-top:4px}
+.predict-btn:hover{box-shadow:0 6px 18px rgba(245,166,35,.45);transform:translateY(-1px)}
+.predict-btn:active{transform:scale(.98)}.predict-btn:disabled{opacity:.55;transform:none;box-shadow:none}
+.result-wrap{display:none;margin-top:18px}
+.result-hero{border-radius:var(--r);padding:20px;border:2px solid;margin-bottom:14px}
+.rh-safe{background:var(--green-bg);border-color:var(--green)}
+.rh-warning{background:var(--orange-bg);border-color:var(--orange)}
+.rh-danger{background:var(--red-bg);border-color:var(--red)}
+.rh-top{display:flex;align-items:center;gap:13px;margin-bottom:14px}
+.rh-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0}
+.rh-safe .rh-icon{background:var(--green);color:#fff}
+.rh-warning .rh-icon{background:var(--orange);color:#fff}
+.rh-danger .rh-icon{background:var(--red);color:#fff}
+.rh-badge{font-size:11px;font-weight:800;letter-spacing:.05em;margin-bottom:3px}
+.rh-safe .rh-badge{color:var(--green)}.rh-warning .rh-badge{color:var(--orange)}.rh-danger .rh-badge{color:var(--red)}
+.rh-val{font-size:34px;font-weight:900;color:var(--text);line-height:1}
+.rh-msg{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px}
+.rh-recos-title{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.reco-list{display:flex;flex-direction:column;gap:7px}
+.reco-item{display:flex;align-items:flex-start;gap:8px;padding:9px 13px;background:var(--gray);border-radius:var(--r-sm);font-size:13px;line-height:1.5}
+.reco-item i{color:var(--primary-dark);flex-shrink:0;margin-top:1px;font-size:15px}
+.result-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.meta-card{background:var(--white);border-radius:var(--r-sm);border:1px solid var(--border);padding:14px;text-align:center;box-shadow:var(--sh)}
+.meta-lbl{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:5px}
+.meta-num{font-size:22px;font-weight:900;color:var(--text)}
+.err-box{background:var(--red-bg);border:1px solid #FFCDD2;color:var(--red);border-radius:var(--r-sm);padding:11px 14px;font-size:13px;display:none;margin-top:10px;line-height:1.5}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:var(--gray);padding:10px 14px;font-size:11px;font-weight:800;color:var(--text2);text-align:left;border-bottom:1px solid var(--border);letter-spacing:.03em}
+.tbl td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#FAFAFA}
+.pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:3px}
+.p-safe{background:var(--green-bg);color:var(--green)}.p-warn{background:var(--orange-bg);color:var(--orange)}.p-danger{background:var(--red-bg);color:var(--red)}
+.acc-wrap{max-width:480px}
+.acc-hdr{display:flex;align-items:center;gap:16px;padding:20px 18px;background:linear-gradient(135deg,#F5A623,#D4891A);border-radius:var(--r) var(--r) 0 0}
+.acc-av{width:56px;height:56px;background:rgba(255,255,255,.22);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;flex-shrink:0}
+.acc-name{font-size:17px;font-weight:800;color:#fff}.acc-role{font-size:12px;color:rgba(255,255,255,.8);margin-top:2px}
+.acc-body{padding:0 18px 18px}
+.acc-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border);font-size:13px}
+.acc-row:last-child{border-bottom:none}
+.acc-lbl{color:var(--text2);font-weight:600}.acc-val{font-weight:700;color:var(--text)}
+.bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);z-index:200;padding:6px 0 max(6px,env(safe-area-inset-bottom))}
+.bnav-inner{display:flex;justify-content:space-around}
+.bnav-item{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 8px;border:none;background:none;flex:1;-webkit-tap-highlight-color:transparent}
+.bnav-item i{font-size:21px;color:#B0BAC4}.bnav-item span{font-size:10px;color:#B0BAC4;font-weight:600}
+.bnav-item.active i{color:var(--primary-dark)}.bnav-item.active span{color:var(--primary-dark)}
+.predict-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.empty-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:14px}
+.empty-icon{font-size:52px;color:#DDE2EA}
+.empty-title{font-size:16px;font-weight:700;color:var(--text)}
+.empty-sub{font-size:13px;color:var(--text2);line-height:1.7}
+
+/* ── LOGIN ── */
+.login-screen{min-height:100vh;background:linear-gradient(180deg,#F5A623 0%,#F5A623 38%,#F4F6F9 38%);display:flex;flex-direction:column;align-items:center;padding:0 20px}
+.login-logo{margin-top:48px;width:64px;height:64px;background:rgba(255,255,255,.22);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:900;font-family:Georgia,serif;box-shadow:0 6px 16px rgba(0,0,0,.12)}
+.login-app-name{color:#fff;font-size:20px;font-weight:800;margin-top:12px;letter-spacing:.02em}
+.login-app-sub{color:rgba(255,255,255,.85);font-size:12px;margin-top:2px;margin-bottom:28px}
+.login-card{background:#fff;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.12);padding:28px 24px;width:100%;max-width:380px}
+.login-title{font-size:17px;font-weight:800;color:var(--text);text-align:center;margin-bottom:22px;letter-spacing:.04em}
+.login-field{margin-bottom:14px}
+.login-input-wrap{position:relative}
+.login-input{width:100%;border:1.5px solid var(--border);border-radius:999px;padding:13px 44px 13px 18px;font-size:14px;color:var(--text);background:#FAFBFD;outline:none;transition:.15s}
+.login-input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(245,166,35,.1)}
+.login-eye{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#9AA5B1;cursor:pointer;font-size:18px;background:none;border:none}
+.login-btn{width:100%;background:#1C2B3A;color:#fff;border:none;border-radius:999px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
+.login-btn:hover{background:#0E1620}
+.login-btn:disabled{opacity:.55}
+.login-forgot{text-align:center;margin-top:16px;font-size:13px;color:var(--text2);font-weight:600;cursor:pointer}
+.login-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:#C3CBD4;font-size:12px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.login-signup-box{text-align:center;border:1.5px solid #FFD699;background:var(--primary-light);border-radius:14px;padding:14px;font-size:13px;color:var(--text)}
+.login-signup-link{color:var(--primary-dark);font-weight:800;text-decoration:underline;cursor:pointer;margin-top:4px;display:inline-block}
+.login-err{background:var(--red-bg);color:var(--red);border:1px solid #FFCDD2;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.login-foot{color:#9AA5B1;font-size:11px;text-align:center;margin:24px 0;line-height:1.6}
+.login-tab-row{display:flex;gap:8px;margin-bottom:18px}
+.login-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;border-radius:999px;cursor:pointer;color:var(--text2);background:var(--gray)}
+.login-tab.active{background:#1C2B3A;color:#fff}
+#login-screen{display:flex}
+#app-root{display:none}
+.entry-banner{background:var(--primary-light);border:1.5px solid #FFE0A3;border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.entry-banner i{color:var(--primary-dark);font-size:20px}
+.entry-banner-text{font-size:13px;color:var(--primary-dark);font-weight:700;flex:1}
+.entry-banner-time{font-size:12px;color:var(--text2);font-weight:600}
+.addpond-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){
+  .predict-layout{grid-template-columns:1fr}
+  .monitor-2col{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .topbar{padding:0 14px;height:54px}
+  .content{padding:14px;padding-bottom:82px}
+  .bnav{display:block}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .pond-bar-stats{display:none}
+  .addpond-layout{grid-template-columns:1fr !important}
+  .form-2col{grid-template-columns:1fr}
+  .result-meta-row{grid-template-columns:1fr}
+  .predict-layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<!-- ══════════ TRANG ĐĂNG NHẬP ══════════ -->
+<div id="login-screen" class="login-screen">
+  <div class="login-logo">AQ</div>
+  <div class="login-app-name">AquaPredict</div>
+  <div class="login-app-sub">AI Aquaculture Platform</div>
+
+  <div class="login-card">
+
+    <div class="login-tab-row">
+      <div class="login-tab active" id="ltab-login" onclick="switchLoginTab('login')">Đăng nhập</div>
+      <div class="login-tab" id="ltab-signup" onclick="switchLoginTab('signup')">Tạo tài khoản</div>
+    </div>
+
+    <div class="login-err" id="login-err"></div>
+
+    <!-- FORM ĐĂNG NHẬP -->
+    <div id="login-form">
+      <div class="login-field">
+        <div class="login-input-wrap">
+          <input type="email" class="login-input" id="li-email" placeholder="Email của bạn"/>
+        </div>
+      </div>
+      <div class="login-field">
+        <div class="login-input-wrap">
+          <input type="password" class="login-input" id="li-pass" placeholder="Nhập mật khẩu"/>
+          <button class="login-eye" onclick="togglePw('li-pass')"><i class="ti ti-eye"></i></button>
+        </div>
+      </div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">
+        <i class="ti ti-login"></i> Đăng nhập
+      </button>
+      <div class="login-forgot" onclick="alert('Tính năng quên mật khẩu sẽ sớm ra mắt.')">Quên mật khẩu?</div>
+    </div>
+
+    <!-- FORM ĐĂNG KÝ -->
+    <div id="signup-form" style="display:none">
+      <div class="login-field">
+        <div class="login-input-wrap">
+          <input type="text" class="login-input" id="su-name" placeholder="Họ và tên"/>
+        </div>
+      </div>
+      <div class="login-field">
+        <div class="login-input-wrap">
+          <input type="email" class="login-input" id="su-email" placeholder="Email của bạn"/>
+        </div>
+      </div>
+      <div class="login-field">
+        <div class="login-input-wrap">
+          <input type="password" class="login-input" id="su-pass" placeholder="Tạo mật khẩu (tối thiểu 6 ký tự)"/>
+          <button class="login-eye" onclick="togglePw('su-pass')"><i class="ti ti-eye"></i></button>
+        </div>
+      </div>
+      <button class="login-btn" id="signup-btn" onclick="doSignup()">
+        <i class="ti ti-user-plus"></i> Tạo tài khoản
+      </button>
+    </div>
+
+  </div>
+
+  <div class="login-foot">AquaPredict v2.0 &middot; Nền tảng AI quản lý chất lượng nước ao nuôi tôm</div>
+</div>
+
+<div id="app-root">
+<div class="app">
+
+<div class="sb-backdrop" id="sb-backdrop" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon" style="font-family:Georgia,serif;font-weight:700;letter-spacing:-1px">AQ</div>
+    <div style="flex:1"><div class="sb-name">AquaPredict</div><div class="sb-tagline">AI Aquaculture Platform</div></div>
+    <button id="sidebar-close" onclick="closeSidebar()" style="display:none;width:30px;height:30px;border:none;background:var(--gray);border-radius:8px;font-size:16px;cursor:pointer;color:var(--text2);align-items:center;justify-content:center;flex-shrink:0">&#10005;</button>
+  </div>
+  <div style="padding:12px 12px 8px;border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:10">
+    <div class="sb-pond-label">AO NUÔI ĐANG XEM</div>
+    <select class="pond-sel" id="pond-select" onchange="updatePond()"></select>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">TỔNG QUAN</div>
+    <button class="sb-item active" id="snav-home" onclick="goPage('home')"><i class="ti ti-layout-dashboard"></i>Trang chủ</button>
+    <button class="sb-item" id="snav-monitor" onclick="goPage('monitor')"><i class="ti ti-activity"></i>Theo dõi</button>
+    <div class="sb-sec">CÔNG CỤ</div>
+    <button class="sb-item" id="snav-predict" onclick="goPage('predict')"><i class="ti ti-brain"></i>Dự báo</button>
+    <button class="sb-item" id="snav-history" onclick="goPage('history')"><i class="ti ti-history"></i>Lịch sử</button>
+    <div class="sb-sec">HỆ THỐNG</div>
+    <button class="sb-item" id="snav-addpond" onclick="goPage('addpond')"><i class="ti ti-circle-plus"></i>Thêm ao nuôi</button>
+    <button class="sb-item" id="snav-account" onclick="goPage('account')"><i class="ti ti-user-circle"></i>Tài khoản</button>
+  </nav>
+</aside>
+
+<div class="main">
+<header class="topbar">
+  <div class="tb-left">
+    <button class="icon-btn" id="menu-btn" onclick="toggleSidebar()" style="display:none;background:linear-gradient(135deg,#F5A623,#D4891A);color:#fff;border:none;font-weight:900;font-family:Georgia,serif;font-size:13px;letter-spacing:-0.5px">AQ</button>
+    <div class="tb-title" id="page-title">Trang chủ</div>
+    <div class="tb-badge" id="alert-badge"><i class="ti ti-alert-triangle" style="font-size:11px"></i><span id="alert-count">1 cảnh báo</span></div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-time" id="clock"></div>
+    <div class="icon-btn" style="font-size:16px">&#128276;</div>
+  </div>
+</header>
+
+<div class="content">
+
+<!-- ══════════ TRANG CHỦ ══════════ -->
+<!-- ══════════ TỔNG QUAN TRẠI ══════════ -->
+<div id="pg-home" class="page active">
+  <div class="pond-bar">
+    <div class="pond-bar-left">
+      <div class="pond-bar-avatar" style="font-size:24px">🦐</div>
+      <div>
+        <div class="pond-bar-name" id="pb-name">Ao 01 — Khu A</div>
+        <div class="pond-bar-sub">Tuổi tôm: <strong style="color:#fff" id="pb-age">— ngày</strong> &nbsp;·&nbsp; Cập nhật: <strong style="color:#fff" id="pb-update">Hôm nay 06:00</strong></div>
+      </div>
+    </div>
+    <div class="pond-bar-stats">
+      <div class="pond-stat"><div class="pond-stat-val" id="pb-total">4</div><div class="pond-stat-lbl">Tổng ao</div></div>
+      <div class="pond-stat"><div class="pond-stat-val" style="color:#FFE0E0" id="pb-danger">1</div><div class="pond-stat-lbl">Nguy hiểm</div></div>
+      <div class="pond-stat"><div class="pond-stat-val" style="color:#FFF3CC" id="pb-warn">1</div><div class="pond-stat-lbl">Cảnh báo</div></div>
+      <div class="pond-stat"><div class="pond-stat-val" style="color:#D4F5DD" id="pb-safe">2</div><div class="pond-stat-lbl">An toàn</div></div>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card sc-red">
+      <div class="stat-top"><div class="stat-ico" style="font-size:20px">🧪</div><div class="stat-trend tr-up" id="trend-tan"><i class="ti ti-trending-up" style="font-size:9px"></i>+0.0</div></div>
+      <div class="stat-lbl">Amoni (TAN)</div><div class="stat-num" id="stat-tan">—</div><div class="stat-unit" id="unit-tan">mg/L</div>
+      <div class="stat-prog"><div class="stat-prog-fill" id="prog-tan" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card sc-green">
+      <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#128167;</div><div class="stat-trend tr-ok" id="trend-ph"><i class="ti ti-minus" style="font-size:9px"></i>ổn</div></div>
+      <div class="stat-lbl">pH</div><div class="stat-num" id="stat-ph">—</div><div class="stat-unit" id="unit-ph">— · An toàn</div>
+      <div class="stat-prog"><div class="stat-prog-fill" id="prog-ph" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card sc-blue">
+      <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#127788;&#65039;</div><div class="stat-trend tr-dn" id="trend-do"><i class="ti ti-trending-down" style="font-size:9px"></i>-0.0</div></div>
+      <div class="stat-lbl">DO</div><div class="stat-num" id="stat-do">—</div><div class="stat-unit" id="unit-do">mg/L · Ổn</div>
+      <div class="stat-prog"><div class="stat-prog-fill" id="prog-do" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card sc-green">
+      <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#129514;</div><div class="stat-trend tr-ok" id="trend-kiem"><i class="ti ti-minus" style="font-size:9px"></i>ổn</div></div>
+      <div class="stat-lbl">Độ kiềm</div><div class="stat-num" id="stat-kiem">—</div><div class="stat-unit" id="unit-kiem">mg/L CaCO&#8323; · Tốt</div>
+      <div class="stat-prog"><div class="stat-prog-fill" id="prog-kiem" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card sc-orange">
+      <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#127777;&#65039;</div><div class="stat-trend tr-up" id="trend-temp"><i class="ti ti-trending-up" style="font-size:9px"></i>+0.0</div></div>
+      <div class="stat-lbl">Nhiệt độ</div><div class="stat-num" id="stat-temp">—</div><div class="stat-unit" id="unit-temp">&#176;C · Tăng</div>
+      <div class="stat-prog"><div class="stat-prog-fill" id="prog-temp" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card sc-blue">
+      <div class="stat-top"><div class="stat-ico" style="font-size:20px">&#127754;</div><div class="stat-trend tr-ok" id="trend-sal"><i class="ti ti-minus" style="font-size:9px"></i>ổn</div></div>
+      <div class="stat-lbl">Độ mặn</div><div class="stat-num" id="stat-sal">—</div><div class="stat-unit" id="unit-sal">&#8240; · Ổn</div>
+      <div class="stat-prog"><div class="stat-prog-fill" id="prog-sal" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- 3 biểu đồ tách riêng -->
+  <div class="chart-3col">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng TAN & Oxy hòa tan (DO) — 7 ngày qua</div><button class="btn-xs" onclick="goPage('predict')">Dự báo ngay</button></div>
+      <div class="card-bd"><div class="chart-box" style="height:200px"><canvas id="chart-tan-do"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng pH & Nhiệt độ — 7 ngày qua</div></div>
+      <div class="card-bd"><div class="chart-box" style="height:190px"><canvas id="chart-ph-temp"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-chart-line"></i>Xu hướng Độ kiềm & Độ mặn — 7 ngày qua</div></div>
+      <div class="card-bd"><div class="chart-box" style="height:190px"><canvas id="chart-kiem"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ THEO DÕI ══════════ -->
+<div id="pg-monitor" class="page">
+  <div class="sec-hdr"><div class="sec-title"><i class="ti ti-activity"></i>Theo dõi chất lượng nước</div></div>
+
+  <!-- Banner ao + giờ đang nhập -->
+  <div class="entry-banner">
+    <i class="ti ti-pencil-plus"></i>
+    <div class="entry-banner-text">Đang nhập số liệu cho: <span id="entry-pond-name">Ao 01 — Khu A</span></div>
+    <div class="entry-banner-time" id="entry-time-slot">Ca đo: 08:00 sáng</div>
+  </div>
+
+  <!-- Form nhập số liệu hàng ngày -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-hd"><div class="card-ttl"><i class="ti ti-pencil-plus"></i>Nhập số liệu hôm nay</div></div>
+    <div class="card-bd">
+      <div class="form-2col" style="margin-bottom:10px">
+        <div class="f-group">
+          <label class="f-label">Ca đo</label>
+          <select class="f-input f-select" id="m-slot">
+            <option value="08:00">08:00 sáng</option>
+            <option value="14:00">14:00 chiều</option>
+          </select>
+        </div>
+        <div class="f-group"><label class="f-label">Tuổi tôm (ngày)</label><input type="number" class="f-input" id="m-age" placeholder="45" inputmode="numeric"/></div>
+        <div class="f-group"><label class="f-label">TAN (mg/L)</label><input type="number" class="f-input" id="m-tan" placeholder="0.5" inputmode="decimal"/></div>
+        <div class="f-group"><label class="f-label">pH</label><input type="number" class="f-input" id="m-ph" placeholder="7.8" inputmode="decimal"/></div>
+        <div class="f-group"><label class="f-label">DO (mg/L)</label><input type="number" class="f-input" id="m-do" placeholder="6.2" inputmode="decimal"/></div>
+        <div class="f-group"><label class="f-label">Nhiệt độ (&#176;C)</label><input type="number" class="f-input" id="m-temp" placeholder="29.5" inputmode="decimal"/></div>
+        <div class="f-group"><label class="f-label">Độ mặn (&#8240;)</label><input type="number" class="f-input" id="m-sal" placeholder="15" inputmode="decimal"/></div>
+        <div class="f-group"><label class="f-label">Độ kiềm (mg/L)</label><input type="number" class="f-input" id="m-alk" placeholder="120" inputmode="decimal"/></div>
+        <div class="f-group"><label class="f-label">Ghi chú</label><input type="text" class="f-input" id="m-note" placeholder="Ghi chú thêm..."/></div>
+      </div>
+      <button class="predict-btn" id="save-measure-btn" onclick="saveMeasurement()" style="max-width:220px">
+        <i class="ti ti-device-floppy"></i> Lưu số liệu
+      </button>
+    </div>
+  </div>
+
+  <div class="pond-bar" style="margin-bottom:18px">
+    <div class="pond-bar-left">
+      <div class="pond-bar-avatar" style="font-size:24px">🦐</div>
+      <div><div class="pond-bar-name">So sánh ao nuôi</div><div class="pond-bar-sub" id="monitor-date">Số liệu ngày —</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ttl"><i class="ti ti-table"></i>Số liệu mới nhất</div></div>
+    <div class="card-bd" style="overflow-x:auto;padding-top:10px">
+      <table class="tbl">
+        <thead><tr><th>Ao</th><th>TAN (mg/L)</th><th>pH</th><th>DO</th><th>Nhiệt độ</th><th>Độ kiềm</th><th>Giờ</th><th>Trạng thái</th></tr></thead>
+        <tbody id="monitor-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DỰ BÁO ══════════ -->
+<div id="pg-predict" class="page">
+  <div class="sec-hdr">
+    <div class="sec-title"><i class="ti ti-brain"></i>Dự báo chất lượng nước</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0">
+    <button class="predict-tab active" id="tab-tan" onclick="switchPredictTab('tan')" style="padding:9px 20px;border:none;background:none;font-size:14px;font-weight:700;color:var(--primary-dark);border-bottom:2px solid var(--primary);margin-bottom:-2px;cursor:pointer">
+      <i class="ti ti-flask" style="font-size:14px;vertical-align:-2px"></i> Dự báo TAN
+    </button>
+    <button class="predict-tab" id="tab-kiem" onclick="switchPredictTab('kiem')" style="padding:9px 20px;border:none;background:none;font-size:14px;font-weight:700;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer">
+      <i class="ti ti-test-pipe" style="font-size:14px;vertical-align:-2px"></i> Dự báo Kiềm
+    </button>
+  </div>
+
+  <div id="predict-tan">
+  <div class="predict-layout">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-forms"></i>Nhập thông số ao</div></div>
+      <div class="card-bd">
+        <div class="f-sec">
+          <div class="f-sec-title"><i class="ti ti-fish"></i>Thông tin ao</div>
+          <div class="form-2col">
+            <div class="f-group"><label class="f-label">Ao nuôi</label><select class="f-input f-select" id="f-ao"></select></div>
+            <div class="f-group"><label class="f-label">Tuổi tôm (ngày)</label><input type="number" class="f-input" id="Tuoi_tom" placeholder="45" inputmode="numeric"/></div>
+          </div>
+        </div>
+        <div class="f-sec">
+          <div class="f-sec-title"><i class="ti ti-droplet"></i>Thông số nước</div>
+          <div class="form-2col">
+            <div class="f-group"><label class="f-label">Nhiệt độ (&#176;C)</label><input type="number" class="f-input" id="Nhiet_do" placeholder="29.5" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">pH</label><input type="number" class="f-input" id="pH" placeholder="7.8" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">DO (mg/L)</label><input type="number" class="f-input" id="DO" placeholder="6.2" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Độ mặn (&#8240;)</label><input type="number" class="f-input" id="Do_man" placeholder="15" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Độ kiềm (mg/L)</label><input type="number" class="f-input" id="Do_kiem" placeholder="120" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Nitrit (mg/L)</label><input type="number" class="f-input" id="Nitrit" placeholder="0.02" inputmode="decimal"/></div>
+            <div class="f-group full"><label class="f-label">Phosphate (mg/L)</label><input type="number" class="f-input" id="Phosphate" placeholder="0.1" inputmode="decimal"/></div>
+          </div>
+          <button class="adv-btn" onclick="toggleExtra()" style="margin-top:10px">
+            <i class="ti ti-chevron-right" id="extra-icon"></i>Thêm thông số (Độ đục, Silica...)
+          </button>
+          <div class="adv-body" id="extra-body">
+            <div class="form-2col">
+            <div class="f-group"><label class="f-label">Độ đục (NTU)</label><input type="number" class="f-input" id="Do_duc" placeholder="25" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Độ trong (cm)</label><input type="number" class="f-input" id="Do_trong" placeholder="35" inputmode="numeric"/></div>
+            <div class="f-group"><label class="f-label">Độ màu (Pt-Co)</label><input type="number" class="f-input" id="Do_mau" placeholder="10" inputmode="numeric"/></div>
+            <div class="f-group"><label class="f-label">Silica (mg/L)</label><input type="number" class="f-input" id="Silica" placeholder="1.5" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Độ cứng (mg/L)</label><input type="number" class="f-input" id="Do_cung" placeholder="800" inputmode="numeric"/></div>
+            </div>
+          </div>
+        </div>
+        <div class="f-sec">
+          <div class="f-sec-title"><i class="ti ti-package"></i>Thức ăn</div>
+          <div class="form-2col">
+            <div class="f-group"><label class="f-label">Protein thô (%)</label><input type="number" class="f-input" id="thucan_protein_tho" placeholder="35" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Lysine (%)</label><input type="number" class="f-input" id="thucan_lysine" placeholder="1.8" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Béo (%)</label><input type="number" class="f-input" id="thucan_beo" placeholder="7" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Xơ thô (%)</label><input type="number" class="f-input" id="thucan_xo_tho" placeholder="3.5" inputmode="decimal"/></div>
+          </div>
+        </div>
+        <div class="f-sec" style="margin-bottom:0">
+          <button class="adv-btn" onclick="toggleAdv()"><i class="ti ti-chevron-right" id="adv-icon"></i>Nâng cao — TAN trước đó</button>
+          <div class="adv-body" id="adv-body">
+            <div class="form-2col">
+              <div class="f-group"><label class="f-label">TAN lần trước (mg/L)</label><input type="number" class="f-input" id="Amoni_lag1" placeholder="0.45" inputmode="decimal"/></div>
+              <div class="f-group"><label class="f-label">TAN 2 lần trước (mg/L)</label><input type="number" class="f-input" id="Amoni_lag2" placeholder="0.40" inputmode="decimal"/></div>
+            </div>
+          </div>
+        </div>
+        <button class="predict-btn" id="btn" onclick="runPredict()">
+          <i class="ti ti-chart-line"></i>Dự báo Amoni ngay
+        </button>
+        <div class="err-box" id="err"></div>
+      </div>
+    </div>
+    <div>
+      <div class="result-wrap" id="result-wrap">
+        <div class="result-hero" id="result-hero">
+          <div class="rh-top">
+            <div class="rh-icon" id="r-icon"></div>
+            <div><div class="rh-badge" id="r-badge"></div><div class="rh-val" id="r-val"></div></div>
+          </div>
+          <div class="rh-msg" id="r-msg"></div>
+          <div class="rh-recos-title">Khuyến nghị xử lý</div>
+          <div class="reco-list" id="r-reco"></div>
+        </div>
+        <div class="result-meta-row">
+          <div class="meta-card"><div class="meta-lbl">Mức rủi ro</div><div class="meta-num" id="r-risk">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div id="predict-kiem" style="display:none">
+    <div class="empty-wrap">
+      <div class="empty-icon"><i class="ti ti-test-pipe"></i></div>
+      <div class="empty-title">Dự báo Độ kiềm</div>
+      <div class="empty-sub">Model AI dự báo độ kiềm đang được huấn luyện từ dữ liệu thực tế.<br/>Tính năng sẽ sớm ra mắt trong phiên bản tiếp theo.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ LỊCH SỬ ══════════ -->
+<div id="pg-history" class="page">
+  <div class="sec-hdr"><div class="sec-title"><i class="ti ti-history"></i>Lịch sử dự báo</div></div>
+  <div class="card">
+    <div class="card-hd">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;width:100%">
+        <input class="f-input" placeholder="&#128269; Tìm theo ao..." style="min-width:160px;flex:1" oninput="filterHistory(this.value)"/>
+      </div>
+    </div>
+    <div class="card-bd" style="overflow-x:auto;padding-top:10px">
+      <table class="tbl" id="hist-tbl">
+        <thead><tr><th>Thời gian</th><th>Ao</th><th>TAN dự báo</th><th>Trạng thái</th><th>Khuyến nghị nhanh</th></tr></thead>
+        <tbody id="hist-body">
+          <tr id="hist-empty"><td colspan="5" style="text-align:center;padding:30px;color:var(--text2)">
+            <i class="ti ti-history" style="font-size:28px;display:block;margin-bottom:10px;color:#DDE2EA"></i>
+            Chưa có dự báo nào. Thực hiện dự báo đầu tiên!
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ THÊM AO NUÔI ══════════ -->
+<div id="pg-addpond" class="page">
+  <div class="sec-hdr"><div class="sec-title"><i class="ti ti-circle-plus"></i>Thêm ao nuôi mới</div></div>
+  <div class="card" style="background:var(--primary-light);border-color:#FFE0A3;margin-bottom:18px">
+    <div class="card-bd" style="padding:14px 16px;font-size:13px;color:var(--primary-dark);line-height:1.7">
+      <div style="font-weight:800;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i class="ti ti-info-circle"></i>Hướng dẫn</div>
+      Nhập đầy đủ thông tin ao nuôi mới. Sau khi lưu, ao sẽ xuất hiện ngay trong danh sách chọn ao và sẵn sàng nhập số liệu theo dõi.
+    </div>
+  </div>
+  <div class="addpond-layout" id="addpond-layout">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-hd"><div class="card-ttl"><i class="ti ti-info-circle"></i>Thông tin ao</div></div>
+      <div class="card-bd">
+        <div class="f-sec">
+          <div class="f-sec-title"><i class="ti ti-fish"></i>Thông tin cơ bản</div>
+          <div class="form-2col">
+            <div class="f-group full"><label class="f-label">Tên ao *</label><input type="text" class="f-input" id="np-name" placeholder="VD: Ao 05 — Khu C"/></div>
+            <div class="f-group"><label class="f-label">Khu vực</label><input type="text" class="f-input" id="np-area" placeholder="VD: Khu C"/></div>
+            <div class="f-group"><label class="f-label">Diện tích (m&#178;)</label><input type="number" class="f-input" id="np-size" placeholder="1750" inputmode="numeric"/></div>
+            <div class="f-group"><label class="f-label">Ngày thả giống</label><input type="date" class="f-input" id="np-date"/></div>
+            <div class="f-group"><label class="f-label">Tuổi tôm hiện tại (ngày)</label><input type="number" class="f-input" id="np-age" placeholder="1" inputmode="numeric"/></div>
+          </div>
+        </div>
+        <div class="f-sec" style="margin-bottom:0">
+          <div class="f-sec-title"><i class="ti ti-notes"></i>Ghi chú</div>
+          <textarea class="f-input" id="np-note" placeholder="Ghi chú thêm về ao nuôi..." rows="3" style="resize:vertical;font-family:inherit"></textarea>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><div class="card-ttl"><i class="ti ti-droplet"></i>Thông số nước ban đầu</div></div>
+        <div class="card-bd">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Nhập thông số đo được khi thả giống.</div>
+          <div class="form-2col">
+            <div class="f-group"><label class="f-label">pH</label><input type="number" class="f-input" id="np-ph" placeholder="7.8" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">DO (mg/L)</label><input type="number" class="f-input" id="np-do" placeholder="6.5" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Nhiệt độ (&#176;C)</label><input type="number" class="f-input" id="np-temp" placeholder="29.0" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Độ mặn (&#8240;)</label><input type="number" class="f-input" id="np-sal" placeholder="15" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">Độ kiềm (mg/L)</label><input type="number" class="f-input" id="np-alk" placeholder="120" inputmode="decimal"/></div>
+            <div class="f-group"><label class="f-label">TAN ban đầu (mg/L)</label><input type="number" class="f-input" id="np-tan" placeholder="0.1" inputmode="decimal"/></div>
+          </div>
+        </div>
+      </div>
+      <button class="predict-btn" onclick="savePond()"><i class="ti ti-device-floppy"></i>Lưu ao nuôi mới</button>
+      <div class="card" style="margin-top:16px">
+        <div class="card-hd"><div class="card-ttl"><i class="ti ti-list"></i>Ao nuôi hiện có</div></div>
+        <div class="card-bd" style="padding-top:10px">
+          <table class="tbl"><thead><tr><th>Tên ao</th><th>Khu vực</th><th>Ngày thả</th><th>Trạng thái</th></tr></thead>
+          <tbody id="pond-list-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TÀI KHOẢN ══════════ -->
+<div id="pg-account" class="page">
+  <div class="sec-title" style="margin-bottom:18px"><i class="ti ti-user-circle"></i>Tài khoản</div>
+  <div class="acc-wrap">
+    <div class="card" style="overflow:hidden">
+      <div class="acc-hdr">
+        <div class="acc-av" id="acc-avatar">?</div>
+        <div>
+          <div class="acc-name" id="acc-name-display">—</div>
+          <div class="acc-role" id="acc-email-display" style="color:rgba(255,255,255,.8);font-size:12px">—</div>
+        </div>
+      </div>
+      <div class="acc-body">
+        <div class="acc-row"><span class="acc-lbl"><i class="ti ti-user" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>Họ tên</span><span class="acc-val" id="acc-name-row">—</span></div>
+        <div class="acc-row"><span class="acc-lbl"><i class="ti ti-mail" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>Email</span><span class="acc-val" id="acc-email-row">—</span></div>
+        <div class="acc-row"><span class="acc-lbl">&#127859; Số ao quản lý</span><span class="acc-val" id="acc-pond-count">4 ao</span></div>
+        <div class="acc-row"><span class="acc-lbl"><i class="ti ti-brain" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>Model AI</span><span class="acc-val">Random Forest v1.0</span></div>
+        <div class="acc-row"><span class="acc-lbl"><i class="ti ti-server" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>API Status</span><span class="acc-val" style="color:var(--green);display:flex;align-items:center;gap:4px"><i class="ti ti-circle-filled" style="font-size:10px"></i>Đang hoạt động</span></div>
+        <div class="acc-row"><span class="acc-lbl"><i class="ti ti-history" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>Tổng dự báo</span><span class="acc-val" id="acc-total">0 lần</span></div>
+        <div class="acc-row"><span class="acc-lbl"><i class="ti ti-tag" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>Phiên bản</span><span class="acc-val">AquaPredict v2.0</span></div>
+      </div>
+      <div style="padding:14px 18px;display:flex;gap:10px;border-top:1px solid var(--border)">
+        <button style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--white);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-settings"></i>Cài đặt</button>
+        <button onclick="doLogout()" style="flex:1;padding:10px;border:1.5px solid var(--red-bg);border-radius:var(--r-sm);background:var(--red-bg);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-logout"></i>Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+</div>
+
+<nav class="bnav">
+  <div class="bnav-inner">
+    <button class="bnav-item active" id="bnav-home" onclick="goPage('home')"><i class="ti ti-layout-dashboard"></i><span>Trang chủ</span></button>
+    <button class="bnav-item" id="bnav-monitor" onclick="goPage('monitor')"><i class="ti ti-activity"></i><span>Theo dõi</span></button>
+    <button class="bnav-item" id="bnav-predict" onclick="goPage('predict')"><i class="ti ti-brain"></i><span>Dự báo</span></button>
+    <button class="bnav-item" id="bnav-history" onclick="goPage('history')"><i class="ti ti-history"></i><span>Lịch sử</span></button>
+    <button class="bnav-item" id="bnav-account" onclick="goPage('account')"><i class="ti ti-user-circle"></i><span>Tài khoản</span></button>
+  </div>
+</nav>
+</div><!-- end app-root -->
+
+<script>
+const API_URL = 'https://aquapredict-fuam.onrender.com/predict';
+
+// ═══ SUPABASE AUTH ═══
+const SUPABASE_URL = 'https://zijmbwlyaoctibqooacm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_7vVkxxzI66Zbtu7LaTqEiQ_OyrILey7';
+let sb = null;
+
+function initSupabase() {
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch(e) {
+    console.error('Không khởi tạo được Supabase:', e);
+  }
+}
+
+async function checkSession() {
+  if (!sb) { showLogin(); return; }
+  try {
+    const { data } = await sb.auth.getSession();
+    if (data.session) {
+      showApp(data.session.user);
+    } else {
+      showLogin();
+    }
+  } catch(e) {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-root').style.display = 'none';
+}
+
+function showApp(user) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = 'block';
+  if (user) {
+    const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Người dùng';
+    const email = user.email || '—';
+    const initial = name.charAt(0).toUpperCase();
+
+    // Avatar
+    const av = document.getElementById('acc-avatar');
+    if (av) av.textContent = initial;
+
+    // Header card
+    const nameEl = document.getElementById('acc-name-display');
+    if (nameEl) nameEl.textContent = name;
+    const emailEl = document.getElementById('acc-email-display');
+    if (emailEl) emailEl.textContent = email;
+
+    // Rows
+    const nameRow = document.getElementById('acc-name-row');
+    if (nameRow) nameRow.textContent = name;
+    const emailRow = document.getElementById('acc-email-row');
+    if (emailRow) emailRow.textContent = email;
+  }
+}
+
+function switchLoginTab(tab) {
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('ltab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('ltab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('login-err').style.display = 'none';
+}
+
+function togglePw(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function showLoginErr(msg) {
+  const e = document.getElementById('login-err');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pass = document.getElementById('li-pass').value;
+  const btn = document.getElementById('login-btn');
+  document.getElementById('login-err').style.display = 'none';
+
+  if (!email || !pass) { showLoginErr('Vui lòng nhập đầy đủ email và mật khẩu.'); return; }
+  if (!sb) { showLoginErr('Không kết nối được hệ thống xác thực.'); return; }
+
+  btn.innerHTML = '<i class="ti ti-loader-2"></i> Đang đăng nhập...';
+  btn.disabled = true;
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) {
+      showLoginErr(error.message.includes('Invalid') ? 'Email hoặc mật khẩu không đúng.' : error.message);
+      return;
+    }
+    showApp(data.user);
+  } catch(e) {
+    showLoginErr('Lỗi kết nối. Vui lòng thử lại.');
+  } finally {
+    btn.innerHTML = '<i class="ti ti-login"></i> Đăng nhập';
+    btn.disabled = false;
+  }
+}
+
+async function doSignup() {
+  const name = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pass = document.getElementById('su-pass').value;
+  const btn = document.getElementById('signup-btn');
+  document.getElementById('login-err').style.display = 'none';
+
+  if (!name || !email || !pass) { showLoginErr('Vui lòng nhập đầy đủ thông tin.'); return; }
+  if (pass.length < 6) { showLoginErr('Mật khẩu phải có ít nhất 6 ký tự.'); return; }
+  if (!sb) { showLoginErr('Không kết nối được hệ thống xác thực.'); return; }
+
+  btn.innerHTML = '<i class="ti ti-loader-2"></i> Đang tạo tài khoản...';
+  btn.disabled = true;
+
+  try {
+    const { data, error } = await sb.auth.signUp({
+      email, password: pass,
+      options: { data: { full_name: name } }
+    });
+    if (error) { showLoginErr(error.message); return; }
+
+    if (data.session) {
+      showApp(data.user);
+    } else {
+      alert('Tạo tài khoản thành công! Vui lòng kiểm tra email để xác nhận, sau đó đăng nhập.');
+      switchLoginTab('login');
+      document.getElementById('li-email').value = email;
+    }
+  } catch(e) {
+    showLoginErr('Lỗi kết nối. Vui lòng thử lại.');
+  } finally {
+    btn.innerHTML = '<i class="ti ti-user-plus"></i> Tạo tài khoản';
+    btn.disabled = false;
+  }
+}
+
+async function doLogout() {
+  if (!confirm('Bạn có chắc muốn đăng xuất không?')) return;
+  if (sb) await sb.auth.signOut();
+  showLogin();
+  document.getElementById('li-email').value = '';
+  document.getElementById('li-pass').value = '';
+}
+
+
+// ═══ DỮ LIỆU AO NUÔI — tải thật từ Supabase, xem loadPondsData() ═══
+let PONDS_DATA = {};
+let POND_IDS = {}; // tên ao -> id (uuid) trong Supabase
+let PONDS = Object.keys(PONDS_DATA);
+let currentPond = PONDS[0];
+let totalPredicts = 0;
+window._chartTanDo = null;
+window._chartPhTemp = null;
+window._chartKiem = null;
+window._chartOverview = null;
+
+function tick() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) +
+    ' \u00b7 ' + n.toLocaleDateString('vi-VN');
+}
+setInterval(tick, 1000); tick();
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sb-backdrop');
+  const isOpen = sb.classList.contains('open');
+  if (isOpen) {
+    sb.classList.remove('open');
+    bd.classList.remove('show');
+  } else {
+    sb.classList.add('open');
+    bd.classList.add('show');
+  }
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-backdrop').classList.remove('show');
+}
+function checkMobile() {
+  const m = window.innerWidth <= 768;
+  const menuBtn = document.getElementById('menu-btn');
+  const closeBtn = document.getElementById('sidebar-close');
+  if (menuBtn) menuBtn.style.display = m ? 'flex' : 'none';
+  if (closeBtn) closeBtn.style.display = m ? 'flex' : 'none';
+  if (!m) closeSidebar();
+}
+window.addEventListener('resize', checkMobile); checkMobile();
+
+function goPage(name) {
+  const titles = {home:'Trang chủ', monitor:'Theo dõi', predict:'Dự báo chất lượng nước', history:'Lịch sử', addpond:'Thêm ao nuôi', account:'Tài khoản'};
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-item, .bnav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('pg-' + name).classList.add('active');
+  ['snav-' + name, 'bnav-' + name].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  });
+  document.getElementById('page-title').textContent = titles[name];
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  if (name === 'monitor') { renderMonitorTable(); updateEntryBanner(); }
+  if (name === 'addpond') renderPondListTable();
+  closeSidebar();
+}
+
+function initPondSelector() {
+  const sel = document.getElementById('pond-select');
+  const fao = document.getElementById('f-ao');
+  sel.innerHTML = '';
+  fao.innerHTML = '';
+  PONDS.forEach(name => {
+    sel.appendChild(new Option(name, name));
+    fao.appendChild(new Option(name, name));
+  });
+  sel.value = currentPond;
+  fao.value = currentPond;
+  document.getElementById('pb-total').textContent = PONDS.length;
+  document.getElementById('acc-pond-count').textContent = PONDS.length + ' ao';
+}
+
+function updatePond() {
+  const sel = document.getElementById('pond-select');
+  currentPond = sel.value;
+  document.getElementById('f-ao').value = currentPond;
+  renderDashboard();
+  updateEntryBanner();
+}
+
+function mapMeasurementRow(row) {
+  const d = new Date(row.measured_at);
+  const dateStr = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0');
+  const fullDate = row.measured_at.slice(0,10);
+  return {
+    date: dateStr, fullDate, age: row.shrimp_age || 0,
+    tan: row.tan ?? 0, ph: row.ph ?? 0, do: row.do_val ?? 0, temp: row.temperature ?? 0,
+    sal: row.salinity ?? 0, alk: row.alkalinity ?? 0,
+    nitrit: row.nitrite ?? 0, po4: row.phosphate ?? 0, id: row.id
+  };
+}
+
+async function loadPondsData() {
+  if (!sb) return;
+  try {
+    const { data: ponds, error } = await sb.from('ponds').select('*').order('created_at');
+    if (error) throw error;
+
+    const newData = {};
+    const newIds = {};
+    for (const p of (ponds || [])) {
+      newIds[p.name] = p.id;
+      const { data: rows, error: mErr } = await sb.from('measurements').select('*').eq('pond_id', p.id).order('measured_at');
+      if (mErr) throw mErr;
+      newData[p.name] = (rows || []).map(mapMeasurementRow);
+    }
+
+    PONDS_DATA = newData;
+    POND_IDS = newIds;
+    PONDS = Object.keys(PONDS_DATA);
+    currentPond = PONDS[0];
+
+    initPondSelector();
+    renderPondListTable();
+    renderMonitorTable();
+    updateEntryBanner();
+    renderDashboard();
+  } catch (e) {
+    console.error('Lỗi tải dữ liệu từ Supabase:', e);
+  }
+}
+
+function formatUpdateTime(fullDateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(fullDateStr); d.setHours(0,0,0,0);
+  const diffDays = Math.round((today - d) / 86400000);
+  if (diffDays === 0) return 'Hôm nay 06:00';
+  if (diffDays === 1) return 'Hôm qua 06:00';
+  if (diffDays > 1) return diffDays + ' ngày trước';
+  return '06:00';
+}
+
+function classifyTAN(v) { if (v < 0.5) return 'safe'; if (v < 1.0) return 'warning'; return 'danger'; }
+function classifyKiem(v) { if (v >= 80 && v <= 160) return 'safe'; if (v >= 60 && v < 80) return 'warning'; return 'danger'; }
+function classifyPH(v) { if (v >= 7.5 && v <= 8.5) return 'safe'; return 'warning'; }
+function classifyDO(v) { if (v >= 5) return 'safe'; if (v >= 4) return 'warning'; return 'danger'; }
+function classifyTemp(v) { if (v >= 26 && v <= 32) return 'safe'; return 'warning'; }
+
+const UNIT_BASE = {tan:'mg/L', ph:'—', do:'mg/L', kiem:'mg/L CaCO₃', temp:'°C', sal:'‰'};
+const STATUS_LABEL = {safe:'An toàn', warning:'Cần chú ý', danger:'Nguy hiểm'};
+
+function setCard(prefix, value, decimals, statusFn) {
+  const numEl = document.getElementById('stat-' + prefix);
+  const progEl = document.getElementById('prog-' + prefix);
+  const unitEl = document.getElementById('unit-' + prefix);
+  if (!numEl) return;
+  numEl.textContent = value.toFixed(decimals);
+  const status = statusFn(value);
+  const card = numEl.closest('.stat-card');
+  card.className = 'stat-card sc-' + (status === 'safe' ? 'green' : status === 'warning' ? 'orange' : 'red');
+  if (unitEl) unitEl.textContent = UNIT_BASE[prefix] + ' · ' + STATUS_LABEL[status];
+  let pct = 50;
+  if (prefix === 'tan') pct = Math.min(100, (value / 1.5) * 100);
+  if (prefix === 'ph') pct = Math.min(100, (value / 10) * 100);
+  if (prefix === 'do') pct = Math.min(100, (value / 8) * 100);
+  if (prefix === 'kiem') pct = Math.min(100, (value / 200) * 100);
+  if (prefix === 'temp') pct = Math.min(100, (value / 35) * 100);
+  if (prefix === 'sal') pct = Math.min(100, (value / 30) * 100);
+  progEl.style.width = pct + '%';
+}
+
+function clearDashboardCards() {
+  ['tan','ph','do','kiem','temp','sal'].forEach(prefix => {
+    const numEl = document.getElementById('stat-' + prefix);
+    const progEl = document.getElementById('prog-' + prefix);
+    const unitEl = document.getElementById('unit-' + prefix);
+    const trendEl = document.getElementById('trend-' + prefix);
+    if (!numEl) return;
+    numEl.textContent = '—';
+    const card = numEl.closest('.stat-card');
+    card.className = 'stat-card sc-muted';
+    if (unitEl) unitEl.textContent = UNIT_BASE[prefix] + ' · Chưa có dữ liệu';
+    if (progEl) progEl.style.width = '0%';
+    if (trendEl) { trendEl.className = 'stat-trend tr-ok'; trendEl.innerHTML = '<i class="ti ti-minus" style="font-size:9px"></i>—'; }
+  });
+  document.getElementById('pb-name').textContent = currentPond || 'Chưa có ao nào';
+  document.getElementById('pb-age').textContent = '— ngày';
+  document.getElementById('pb-update').textContent = 'Chưa có dữ liệu';
+  const alertList = document.getElementById('alert-list');
+  if (alertList) alertList.innerHTML = '';
+  const countEl = document.getElementById('alert-count');
+  if (countEl) countEl.textContent = '0 cảnh báo';
+}
+
+// ── TỔNG QUAN TRẠI ──
+function renderDashboard() {
+  renderPondBarStats();
+  const data = PONDS_DATA[currentPond];
+  if (!data || data.length === 0) { clearDashboardCards(); return; }
+  const latest = data[data.length - 1];
+  const prev = data[data.length - 2] || latest;
+
+  document.getElementById('pb-name').textContent = currentPond;
+  document.getElementById('pb-age').textContent = latest.age + ' ngày';
+  document.getElementById('pb-update').textContent = formatUpdateTime(latest.fullDate) + ' (' + latest.date + ')';
+
+  setCard('tan', latest.tan, 3, classifyTAN);
+  setCard('ph', latest.ph, 2, classifyPH);
+  setCard('do', latest.do, 2, classifyDO);
+  setCard('kiem', latest.alk, 0, classifyKiem);
+  setCard('temp', latest.temp, 1, classifyTemp);
+  setCard('sal', latest.sal, 1, () => 'safe');
+
+  setTrend('trend-tan', latest.tan - prev.tan, 3);
+  setTrend('trend-ph', latest.ph - prev.ph, 2);
+  setTrend('trend-do', latest.do - prev.do, 2);
+  setTrend('trend-kiem', latest.alk - prev.alk, 0);
+  setTrend('trend-temp', latest.temp - prev.temp, 1);
+  setTrend('trend-sal', latest.sal - prev.sal, 1);
+
+  renderAlerts(latest);
+  renderCharts(data);
+}
+
+function setTrend(id, diff, decimals) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const up = diff > 0.001, down = diff < -0.001;
+  el.className = 'stat-trend ' + (up ? 'tr-up' : down ? 'tr-dn' : 'tr-ok');
+  const icon = up ? 'ti-trending-up' : down ? 'ti-trending-down' : 'ti-minus';
+  const sign = up ? '+' : '';
+  const text = (up || down) ? sign + diff.toFixed(decimals) : 'ổn';
+  el.innerHTML = '<i class="ti ' + icon + '" style="font-size:9px"></i>' + text;
+}
+
+function renderAlerts(latest) {
+  const alerts = [];
+  const tanStatus = classifyTAN(latest.tan);
+  const alertTime = formatUpdateTime(latest.fullDate);
+  if (tanStatus === 'danger') alerts.push({cls:'al-danger', title:'TAN vượt ngưỡng nguy hiểm', desc:latest.tan.toFixed(3)+' mg/L — Cần can thiệp ngay', time:alertTime});
+  else if (tanStatus === 'warning') alerts.push({cls:'al-warn', title:'TAN đang tăng', desc:latest.tan.toFixed(3)+' mg/L — Theo dõi chặt', time:alertTime});
+  if (latest.temp > 30) alerts.push({cls:'al-warn', title:'Nhiệt độ cao', desc:latest.temp+'\u00b0C — Theo dõi sức khỏe tôm', time:alertTime});
+  alerts.push({cls:'al-info', title:'Lịch cho ăn buổi sáng', desc:currentPond+' — 06:30 sáng', time:'Nhắc nhở'});
+
+  const countEl = document.getElementById('alert-count');
+  if (countEl) countEl.textContent = alerts.filter(a=>a.cls!=='al-info').length + ' cảnh báo';
+
+  const list = document.getElementById('alert-list');
+  if (!list) return; // Card cảnh báo đã bị ẩn khỏi Trang chủ
+  const dotMap = {'al-danger':'#B71C1C','al-warn':'#E65100','al-info':'#D4891A'};
+  list.innerHTML = alerts.map(a => `
+    <div class="alert ${a.cls}">
+      <div class="al-dot" style="background:${dotMap[a.cls]}"></div>
+      <div><div class="al-title">${a.title}</div><div class="al-desc">${a.desc}</div><div class="al-time">${a.time}</div></div>
+    </div>`).join('');
+}
+
+function renderPondBarStats() {
+  let danger=0, warn=0, safe=0;
+  PONDS.forEach(name => {
+    const d = PONDS_DATA[name];
+    if (!d || d.length === 0) return;
+    const latest = d[d.length-1];
+    const s = classifyTAN(latest.tan);
+    if (s==='danger') danger++; else if (s==='warning') warn++; else safe++;
+  });
+  document.getElementById('pb-danger').textContent = danger;
+  document.getElementById('pb-warn').textContent = warn;
+  document.getElementById('pb-safe').textContent = safe;
+}
+
+function renderCharts(fullData) {
+  const data = fullData.slice(-7);
+  const labels = data.map(r => r.date);
+
+  if (window._chartTanDo) window._chartTanDo.destroy();
+  const ctx1 = document.getElementById('chart-tan-do').getContext('2d');
+  window._chartTanDo = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'TAN (mg/L)', data:data.map(r=>r.tan), borderColor:'#E53935', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#E53935', tension:.4, fill:false, yAxisID:'y'},
+        {label:'DO (mg/L)',  data:data.map(r=>r.do),  borderColor:'#2E7D32', borderWidth:2,   pointRadius:2, tension:.4, fill:false, yAxisID:'y2'}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:true, position:'bottom', labels:{font:{size:11}, boxWidth:12, padding:10}}},
+      scales:{
+        y:{type:'linear', position:'left', min:0, max:2.5, grid:{color:'#F0F2F5'}, ticks:{font:{size:11}}, title:{display:true,text:'TAN (mg/L)',font:{size:10}}},
+        y2:{type:'linear', position:'right', min:0, max:10, grid:{drawOnChartArea:false}, ticks:{font:{size:11}}, title:{display:true,text:'DO (mg/L)',font:{size:10}}},
+        x:{grid:{display:false}, ticks:{font:{size:10}, maxRotation:0}}
+      }
+    }
+  });
+
+  if (window._chartPhTemp) window._chartPhTemp.destroy();
+  const ctx3 = document.getElementById('chart-ph-temp').getContext('2d');
+  window._chartPhTemp = new Chart(ctx3, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'pH', data:data.map(r=>r.ph), borderColor:'#1976D2', borderWidth:2.5, pointRadius:3, tension:.4, fill:false, yAxisID:'y'},
+        {label:'Nhiệt độ (\u00b0C)', data:data.map(r=>r.temp), borderColor:'#F57C00', borderWidth:2, pointRadius:2, tension:.4, fill:false, yAxisID:'y2', borderDash:[4,3]}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:true, position:'bottom', labels:{font:{size:11}, boxWidth:12, padding:10}}},
+      scales:{
+        y:{type:'linear', position:'left', min:6, max:9, grid:{color:'#F0F2F5'}, ticks:{font:{size:11}}, title:{display:true,text:'pH',font:{size:10}}},
+        y2:{type:'linear', position:'right', min:20, max:35, grid:{drawOnChartArea:false}, ticks:{font:{size:11}}, title:{display:true,text:'\u00b0C',font:{size:10}}},
+        x:{grid:{display:false}, ticks:{font:{size:10}, maxRotation:0}}
+      }
+    }
+  });
+
+  if (window._chartKiem) window._chartKiem.destroy();
+  const ctx2 = document.getElementById('chart-kiem').getContext('2d');
+  window._chartKiem = new Chart(ctx2, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Độ kiềm (mg/L CaCO\u2083)', data:data.map(r=>r.alk), borderColor:'#8E24AA', backgroundColor:'rgba(142,36,170,.07)', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#8E24AA', tension:.4, fill:true, yAxisID:'y'},
+        {label:'Độ mặn (\u2030)', data:data.map(r=>r.sal), borderColor:'#00ACC1', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#00ACC1', tension:.4, fill:false, yAxisID:'y2'},
+        {label:'Ngưỡng tối thiểu kiềm (80)', data:data.map(()=>80), borderColor:'rgba(230,81,0,.45)', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false, yAxisID:'y'},
+        {label:'Ngưỡng tối đa kiềm (160)', data:data.map(()=>160), borderColor:'rgba(183,28,28,.35)', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false, yAxisID:'y'}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:true, position:'bottom', labels:{font:{size:11}, boxWidth:12, padding:10}}},
+      scales:{
+        y:{type:'linear', position:'left', min:0, max:200, grid:{color:'#F0F2F5'}, ticks:{font:{size:11}}, title:{display:true,text:'Độ kiềm (mg/L CaCO\u2083)',font:{size:10}}},
+        y2:{type:'linear', position:'right', min:0, max:30, grid:{drawOnChartArea:false}, ticks:{font:{size:11}}, title:{display:true,text:'Độ mặn (\u2030)',font:{size:10}}},
+        x:{grid:{display:false}, ticks:{font:{size:10}, maxRotation:0}}
+      }
+    }
+  });
+}
+
+// ── TRANG THEO DÕI ──
+function updateEntryBanner() {
+  document.getElementById('entry-pond-name').textContent = currentPond;
+  const now = new Date();
+  const hour = now.getHours();
+  const slot = hour < 12 ? '08:00' : '14:00';
+  document.getElementById('m-slot').value = slot;
+  document.getElementById('entry-time-slot').textContent = 'Ca đo: ' + (slot === '08:00' ? '08:00 sáng' : '14:00 chiều');
+
+  const data = PONDS_DATA[currentPond];
+  if (data && data.length > 0) {
+    const latest = data[data.length - 1];
+    document.getElementById('m-age').value = latest.age + 1;
+  }
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'm-slot') {
+    const slot = e.target.value;
+    document.getElementById('entry-time-slot').textContent = 'Ca đo: ' + (slot === '08:00' ? '08:00 sáng' : '14:00 chiều');
+  }
+});
+
+async function saveMeasurement() {
+  const tan = parseFloat(document.getElementById('m-tan').value);
+  const ph = parseFloat(document.getElementById('m-ph').value);
+  const do_ = parseFloat(document.getElementById('m-do').value);
+  const temp = parseFloat(document.getElementById('m-temp').value);
+  const sal = parseFloat(document.getElementById('m-sal').value);
+  const alk = parseFloat(document.getElementById('m-alk').value);
+  const age = parseInt(document.getElementById('m-age').value) || 1;
+  const slot = document.getElementById('m-slot').value;
+
+  if (isNaN(tan) || isNaN(ph) || isNaN(do_) || isNaN(temp) || isNaN(sal) || isNaN(alk)) {
+    alert('Vui lòng nhập đầy đủ các chỉ số: TAN, pH, DO, Nhiệt độ, Độ mặn, Độ kiềm.');
+    return;
+  }
+
+  const pondId = POND_IDS[currentPond];
+  if (!sb || !pondId) { alert('Không tìm thấy ao trong hệ thống dữ liệu.'); return; }
+
+  const today = new Date();
+  const dateStr = today.getDate().toString().padStart(2,'0') + '/' + (today.getMonth()+1).toString().padStart(2,'0');
+  const fullDate = today.toISOString().slice(0,10);
+
+  try {
+    const { error } = await sb.from('measurements').insert({
+      pond_id: pondId, measured_at: today.toISOString(),
+      tan, ph, do_val: do_, temperature: temp, salinity: sal, alkalinity: alk, shrimp_age: age
+    });
+    if (error) throw error;
+  } catch (e) {
+    alert('Lỗi khi lưu số liệu vào hệ thống: ' + (e.message || e));
+    return;
+  }
+
+  const newRecord = {
+    date: dateStr, fullDate, age, tan, ph, do: do_, temp, sal, alk,
+    nitrit: 0.02, po4: 0.1, slot
+  };
+
+  PONDS_DATA[currentPond].push(newRecord);
+  // Giữ tối đa 20 bản ghi gần nhất để biểu đồ không quá dài
+  if (PONDS_DATA[currentPond].length > 20) {
+    PONDS_DATA[currentPond] = PONDS_DATA[currentPond].slice(-20);
+  }
+
+  ['m-tan','m-ph','m-do','m-temp','m-sal','m-alk','m-note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  alert(`\u2705 Đã lưu số liệu cho ${currentPond} — ca ${slot}!`);
+  renderDashboard();
+  renderMonitorTable();
+  updateEntryBanner();
+}
+
+function renderMonitorTable() {
+  const tbody = document.getElementById('monitor-tbody');
+  let latestDate = '—';
+  tbody.innerHTML = PONDS.map(name => {
+    const d = PONDS_DATA[name];
+    if (!d || d.length === 0) return '';
+    const L = d[d.length-1];
+    latestDate = L.date;
+    const status = classifyTAN(L.tan);
+    const pillMap = {safe:'p-safe', warning:'p-warn', danger:'p-danger'};
+    const labelMap = {safe:'An toàn', warning:'Cảnh báo', danger:'Nguy hiểm'};
+    const iconMap = {safe:'ti-circle-check', warning:'ti-alert-triangle', danger:'ti-alert-octagon'};
+    const colorMap = {safe:'var(--green)', warning:'var(--orange)', danger:'var(--red)'};
+    const timeStr = L.slot || '06:00';
+    return `<tr>
+      <td><strong>${name}</strong></td>
+      <td style="color:${colorMap[status]};font-weight:800">${L.tan.toFixed(3)}</td>
+      <td>${L.ph.toFixed(2)}</td>
+      <td>${L.do.toFixed(2)}</td>
+      <td>${L.temp.toFixed(1)}\u00b0C</td>
+      <td>${L.alk} mg/L</td>
+      <td style="color:var(--text2);font-size:12px">${timeStr}</td>
+      <td><span class="pill ${pillMap[status]}"><i class="ti ${iconMap[status]}" style="font-size:10px"></i>${labelMap[status]}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('monitor-date').textContent = 'Số liệu ngày ' + latestDate;
+}
+
+// ── DỰ BÁO ──
+function switchPredictTab(tab) {
+  document.getElementById('predict-tan').style.display = tab === 'tan' ? 'block' : 'none';
+  document.getElementById('predict-kiem').style.display = tab === 'kiem' ? 'block' : 'none';
+  ['tan','kiem'].forEach(t => {
+    const btn = document.getElementById('tab-' + t);
+    if (t === tab) { btn.style.color='var(--primary-dark)'; btn.style.borderBottom='2px solid var(--primary)'; btn.style.fontWeight='700'; }
+    else { btn.style.color='var(--text2)'; btn.style.borderBottom='2px solid transparent'; btn.style.fontWeight='600'; }
+  });
+}
+function toggleAdv() {
+  const b = document.getElementById('adv-body'), i = document.getElementById('adv-icon');
+  b.classList.toggle('open');
+  i.className = b.classList.contains('open') ? 'ti ti-chevron-down' : 'ti ti-chevron-right';
+}
+function toggleExtra() {
+  const b = document.getElementById('extra-body'), i = document.getElementById('extra-icon');
+  b.classList.toggle('open');
+  i.className = b.classList.contains('open') ? 'ti ti-chevron-down' : 'ti ti-chevron-right';
+}
+
+async function runPredict() {
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+
+  if (!document.getElementById('Amoni_lag1').value) document.getElementById('Amoni_lag1').value = '0.5';
+  if (!document.getElementById('Amoni_lag2').value) document.getElementById('Amoni_lag2').value = '0.45';
+  if (!document.getElementById('Do_duc').value) document.getElementById('Do_duc').value = '25';
+  if (!document.getElementById('Do_trong').value) document.getElementById('Do_trong').value = '35';
+  if (!document.getElementById('Do_mau').value) document.getElementById('Do_mau').value = '10';
+  if (!document.getElementById('Silica').value) document.getElementById('Silica').value = '1.5';
+  if (!document.getElementById('Do_cung').value) document.getElementById('Do_cung').value = '800';
+
+  const ids = ['Amoni_lag1','Amoni_lag2','Do_kiem','Tuoi_tom','Do_man','Do_duc',
+    'Nhiet_do','Phosphate','pH','DO','Do_trong','Silica','Do_mau','Nitrit','Do_cung',
+    'thucan_lysine','thucan_protein_tho','thucan_beo','thucan_xo_tho'];
+  const payload = {};
+  for (const f of ids) {
+    const v = document.getElementById(f).value;
+    if (v === '') { showErr('Vui lòng nhập đủ thông số nước và thức ăn.'); return; }
+    payload[f] = parseFloat(v);
+  }
+
+  btn.innerHTML = '<i class="ti ti-loader-2"></i>Đang phân tích...';
+  btn.disabled = true;
+  try {
+    const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    if (!r.ok) { const e = await r.json(); showErr('Lỗi API: '+(e.detail||r.status)); return; }
+    const d = await r.json();
+    showResult(d);
+    addHistory(d);
+  } catch(e) {
+    showErr('Không kết nối được server. Vui lòng thử lại sau.');
+  } finally {
+    btn.innerHTML = '<i class="ti ti-chart-line"></i>Dự báo Amoni ngay';
+    btn.disabled = false;
+  }
+}
+
+function showResult(d) {
+  const wrap = document.getElementById('result-wrap');
+  const hero = document.getElementById('result-hero');
+  const map = {SAFE:'rh-safe', WARNING:'rh-warning', DANGER:'rh-danger'};
+  const iconMap = {SAFE:'ti-circle-check', WARNING:'ti-alert-triangle', DANGER:'ti-alert-octagon'};
+  const riskMap = {SAFE:{short:'Thấp', desc:'Ao đang ổn định'}, WARNING:{short:'Trung bình', desc:'Cần theo dõi chặt'}, DANGER:{short:'Cao', desc:'Cần can thiệp ngay'}};
+  const recoMap = {
+    SAFE:['Tiếp tục theo dõi định kỳ','Duy trì chế độ cho ăn hiện tại','Đo lại sau 12 giờ'],
+    WARNING:['Giảm 20% lượng thức ăn','Tăng cường sục khí','Kiểm tra pH và nhiệt độ','Theo dõi lại sau 6 giờ'],
+    DANGER:['Ngưng cho ăn ngay lập tức','Thay 20\u201330% nước ao','Tăng sục khí tối đa','Xét dùng vi sinh xử lý','Đo lại sau 3 giờ']
+  };
+  const cls = d.warning_level_en || 'SAFE';
+  hero.className = 'result-hero ' + map[cls];
+  document.getElementById('r-icon').innerHTML = '<i class="ti '+iconMap[cls]+'"></i>';
+  document.getElementById('r-badge').textContent = d.warning_level;
+  document.getElementById('r-val').textContent = d.tan_predicted_mg_l.toFixed(4)+' mg/L';
+  document.getElementById('r-msg').textContent = d.warning_message;
+  const riskEl = document.getElementById('r-risk');
+  riskEl.innerHTML = `<span style="font-size:16px;font-weight:900">${riskMap[cls].short}</span><br><span style="font-size:11px;font-weight:500;color:var(--text2)">${riskMap[cls].desc}</span>`;
+  document.getElementById('r-reco').innerHTML = (recoMap[cls]||[]).map(t=>`<div class="reco-item"><i class="ti ti-arrow-right" style="font-size:13px"></i>${t}</div>`).join('');
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function addHistory(d) {
+  totalPredicts++;
+  document.getElementById('acc-total').textContent = totalPredicts+' lần';
+  const pillMap = {SAFE:'p-safe', WARNING:'p-warn', DANGER:'p-danger'};
+  const iconMap = {SAFE:'ti-circle-check', WARNING:'ti-alert-triangle', DANGER:'ti-alert-octagon'};
+  const recoShort = {SAFE:'Theo dõi định kỳ', WARNING:'Giảm thức ăn, tăng sục khí', DANGER:'Can thiệp ngay'};
+  const cls = d.warning_level_en || 'SAFE';
+  const ao = document.getElementById('f-ao')?.value || currentPond;
+  const now = new Date().toLocaleString('vi-VN', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const row = `<tr>
+    <td style="color:var(--text2);font-size:12px">${now}</td>
+    <td><strong>${ao}</strong></td>
+    <td style="font-weight:800;color:${cls==='SAFE'?'var(--green)':cls==='WARNING'?'var(--orange)':'var(--red)'}">${d.tan_predicted_mg_l.toFixed(4)} mg/L</td>
+    <td><span class="pill ${pillMap[cls]}"><i class="ti ${iconMap[cls]}" style="font-size:10px"></i>${d.warning_level}</span></td>
+    <td style="font-size:12px;color:var(--text2)">${recoShort[cls]}</td>
+  </tr>`;
+  const tbody = document.getElementById('hist-body');
+  const empty = document.getElementById('hist-empty');
+  if (empty) empty.remove();
+  tbody.insertAdjacentHTML('afterbegin', row);
+}
+
+function filterHistory(q) {
+  const rows = document.querySelectorAll('#hist-body tr:not(#hist-empty)');
+  rows.forEach(r => { r.style.display = (q && !r.textContent.toLowerCase().includes(q.toLowerCase())) ? 'none' : ''; });
+}
+function showErr(msg) {
+  const e = document.getElementById('err');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+// ── THÊM AO MỚI ──
+function renderPondListTable() {
+  const tbody = document.getElementById('pond-list-body');
+  tbody.innerHTML = PONDS.map(name => {
+    const d = PONDS_DATA[name];
+    const first = d && d.length > 0 ? d[0].fullDate : null;
+    const dateStr = first ? new Date(first).toLocaleDateString('vi-VN') : '—';
+    return `<tr><td><strong>${name}</strong></td><td>—</td><td>${dateStr}</td><td><span class="pill p-safe"><i class="ti ti-circle-check" style="font-size:10px"></i>Hoạt động</span></td></tr>`;
+  }).join('');
+}
+
+async function savePond() {
+  const name = document.getElementById('np-name').value.trim();
+  const area = document.getElementById('np-area').value.trim();
+  const date = document.getElementById('np-date').value;
+  const age  = parseInt(document.getElementById('np-age').value) || 1;
+
+  if (!name) { alert('Vui lòng nhập tên ao.'); return; }
+  if (PONDS_DATA[name]) { alert('Ao này đã tồn tại!'); return; }
+
+  const ph   = parseFloat(document.getElementById('np-ph').value)   || 7.8;
+  const do_  = parseFloat(document.getElementById('np-do').value)   || 6.0;
+  const temp = parseFloat(document.getElementById('np-temp').value) || 29.0;
+  const sal  = parseFloat(document.getElementById('np-sal').value)  || 15;
+  const alk  = parseFloat(document.getElementById('np-alk').value)  || 120;
+  const tan  = parseFloat(document.getElementById('np-tan').value)  || 0.1;
+
+  const today = new Date();
+  const dateStr = today.getDate().toString().padStart(2,'0') + '/' + (today.getMonth()+1).toString().padStart(2,'0');
+  const fullDate = today.toISOString().slice(0,10);
+
+  if (!sb) { alert('Không kết nối được hệ thống dữ liệu.'); return; }
+
+  let pondId;
+  try {
+    const { data: pondRow, error: pondErr } = await sb.from('ponds').insert({
+      name, area: area || null, species: 'Tôm thẻ chân trắng',
+      stocking_date: date || fullDate
+    }).select().single();
+    if (pondErr) throw pondErr;
+    pondId = pondRow.id;
+
+    const { error: measErr } = await sb.from('measurements').insert({
+      pond_id: pondId, measured_at: today.toISOString(),
+      tan, ph, do_val: do_, temperature: temp, salinity: sal, alkalinity: alk, shrimp_age: age
+    });
+    if (measErr) throw measErr;
+  } catch (e) {
+    alert('Lỗi khi lưu ao mới vào hệ thống: ' + (e.message || e));
+    return;
+  }
+
+  POND_IDS[name] = pondId;
+
+  // Tạo ao mới với 1 bản ghi đầu tiên
+  PONDS_DATA[name] = [{
+    date: dateStr, fullDate, age, tan, ph, do: do_, temp, sal, alk,
+    nitrit: 0.02, po4: 0.1
+  }];
+  PONDS = Object.keys(PONDS_DATA);
+
+  // Cập nhật toàn bộ UI liên quan
+  initPondSelector();
+  renderPondListTable();
+
+  // Reset form
+  ['np-name','np-area','np-size','np-date','np-age','np-note',
+   'np-ph','np-do','np-temp','np-sal','np-alk','np-tan'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  alert(`\u2705 Đã thêm ao "${name}" thành công! Ao đã xuất hiện trong danh sách.`);
+
+  // Chuyển sang xem ao mới luôn
+  currentPond = name;
+  document.getElementById('pond-select').value = name;
+  renderDashboard();
+}
+
+window.addEventListener('load', () => {
+  initSupabase();
+  checkSession();
+  loadPondsData();
+});
+</script>
+</body>
+</html>
