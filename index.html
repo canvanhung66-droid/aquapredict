@@ -467,7 +467,7 @@ body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe 
         <div class="f-sec">
           <div class="f-sec-title"><i class="ti ti-fish"></i>Thông tin ao</div>
           <div class="form-2col">
-            <div class="f-group"><label class="f-label">Ao nuôi</label><select class="f-input f-select" id="f-ao"></select></div>
+            <div class="f-group"><label class="f-label">Ao nuôi</label><select class="f-input f-select" id="f-ao" onchange="prefillPredictForm()"></select></div>
             <div class="f-group"><label class="f-label">Tuổi tôm (ngày)</label><input type="number" class="f-input" id="Tuoi_tom" placeholder="45" inputmode="numeric"/></div>
           </div>
         </div>
@@ -880,7 +880,21 @@ function goPage(name) {
   window.scrollTo({top: 0, behavior: 'smooth'});
   if (name === 'monitor') { renderMonitorTable(); updateEntryBanner(); }
   if (name === 'addpond') renderPondListTable();
+  if (name === 'predict') prefillPredictForm();
   closeSidebar();
+}
+
+function prefillPredictForm() {
+  const fao = document.getElementById('f-ao');
+  const pond = fao && fao.value ? fao.value : currentPond;
+  const data = PONDS_DATA[pond];
+  const el1 = document.getElementById('Amoni_lag1');
+  const el2 = document.getElementById('Amoni_lag2');
+  if (!el1 || !el2) return;
+  if (!data || data.length === 0) return;
+  const n = data.length;
+  el1.value = data[n - 1].tan.toFixed(3);
+  el2.value = (n >= 2 ? data[n - 2].tan : data[n - 1].tan).toFixed(3);
 }
 
 function initPondSelector() {
