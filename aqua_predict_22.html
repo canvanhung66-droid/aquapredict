@@ -618,7 +618,7 @@ body{background:var(--gray);font-family:-apple-system,BlinkMacSystemFont,'Segoe 
       <div class="card" style="margin-top:16px">
         <div class="card-hd"><div class="card-ttl"><i class="ti ti-list"></i>Ao nuôi hiện có</div></div>
         <div class="card-bd" style="padding-top:10px">
-          <table class="tbl"><thead><tr><th>Tên ao</th><th>Khu vực</th><th>Ngày thả</th><th>Trạng thái</th></tr></thead>
+          <table class="tbl"><thead><tr><th>Tên ao</th><th>Khu vực</th><th>Ngày thả</th><th>Trạng thái</th><th>Thành viên</th></tr></thead>
           <tbody id="pond-list-body"></tbody></table>
         </div>
       </div>
@@ -1419,8 +1419,22 @@ function renderPondListTable() {
     const d = PONDS_DATA[name];
     const first = d && d.length > 0 ? d[0].fullDate : null;
     const dateStr = first ? new Date(first).toLocaleDateString('vi-VN') : '—';
-    return `<tr><td><strong>${name}</strong></td><td>—</td><td>${dateStr}</td><td><span class="pill p-safe"><i class="ti ti-circle-check" style="font-size:10px"></i>Hoạt động</span></td></tr>`;
+    const pondId = POND_IDS[name];
+    return `<tr><td><strong>${name}</strong></td><td>—</td><td>${dateStr}</td><td><span class="pill p-safe"><i class="ti ti-circle-check" style="font-size:10px"></i>Hoạt động</span></td><td><button class="btn-xs" onclick="inviteMember('${pondId}', '${name.replace(/'/g, "\\'")}')"><i class="ti ti-user-plus"></i> Mời</button></td></tr>`;
   }).join('');
+}
+
+async function inviteMember(pondId, pondName) {
+  if (!sb) { alert('Không kết nối được hệ thống dữ liệu.'); return; }
+  const email = prompt(`Nhập email người bạn muốn mời cùng quản lý "${pondName}":`);
+  if (!email) return;
+  try {
+    const { error } = await sb.rpc('invite_pond_member', { p_pond_id: pondId, p_email: email.trim() });
+    if (error) throw error;
+    alert(`✅ Đã mời ${email} cùng quản lý "${pondName}".`);
+  } catch (e) {
+    alert('Lỗi khi mời thành viên: ' + (e.message || e));
+  }
 }
 
 async function savePond() {
