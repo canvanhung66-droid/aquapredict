@@ -13,6 +13,9 @@ import numpy as np
 import joblib
 import os
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # ----------------------------------------------------------
@@ -37,14 +40,14 @@ app.add_middleware(
 # SUPABASE CONFIG
 # ----------------------------------------------------------
 
-SUPABASE_URL = os.getenv(
-    "SUPABASE_URL",
-    "https://zijmbwlyaoctibqooacm.supabase.co"
-)
-SUPABASE_KEY = os.getenv(
-    "SUPABASE_KEY",
-    "REDACTED_ROTATED_KEY"
-)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError(
+        "Thiếu SUPABASE_URL hoặc SUPABASE_KEY. "
+        "Đặt trong file .env hoặc biến môi trường hệ thống."
+    )
 
 SUPABASE_HEADERS = {
     "apikey": SUPABASE_KEY,
