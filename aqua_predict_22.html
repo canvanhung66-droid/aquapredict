@@ -1012,6 +1012,7 @@ function clearDashboardCards() {
 
 // ── TỔNG QUAN TRẠI ──
 function renderDashboard() {
+  renderPondBarStats();
   const data = PONDS_DATA[currentPond];
   if (!data || data.length === 0) { clearDashboardCards(); return; }
   const latest = data[data.length - 1];
@@ -1037,7 +1038,6 @@ function renderDashboard() {
 
   renderAlerts(latest);
   renderCharts(data);
-  renderPondBarStats();
 }
 
 function setTrend(id, diff, decimals) {
